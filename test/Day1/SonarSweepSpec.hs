@@ -1,7 +1,7 @@
-module AdventOfCode.SonarSweepSpec where
+module Day1.SonarSweepSpec where
 
 import Test.Hspec ( it, shouldBe, Spec )
-import AdventOfCode.SonarSweep (countIncreasingWindows)
+import Day1.SonarSweep (countIncreasingWindows)
 
 spec :: Spec
 spec = do

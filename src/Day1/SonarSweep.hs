@@ -1,4 +1,4 @@
-module AdventOfCode.SonarSweep (countIncreasingWindows) where
+module Day1.SonarSweep (countIncreasingWindows) where
 
 countIncreasingWindows :: (Ord a, Num p, Num a) => Int -> [a] -> p
 countIncreasingWindows _ [] = 0
