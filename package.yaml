@@ -1,6 +1,6 @@
 name:                advent-of-code
 version:             0.1.0.0
-github:              "githubuser/advent-of-code"
+github:              "tbsklg/advent-of-code"
 license:             BSD3
 author:              "Tobias Klug"
 maintainer:          "tbs.klg@gmail.com"
