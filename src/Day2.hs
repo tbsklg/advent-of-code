@@ -1,20 +1,18 @@
-module Day2.Position where
-
-import Data.Bits (Bits (xor))
+module Day2 (calculatePosition, calculatePositionWithAim) where
 
 data Move = Forward Int | Up Int | Down Int deriving (Show)
 
-calculatePosition :: [[Char]] -> Int
+calculatePosition :: [Char] -> Int
 calculatePosition l = uncurry (*) position
   where
-    position = foldl (flip changePosition) (0, 0) . map extractMove $ l
+    position = foldl (flip changePosition) (0, 0) . map extractMove $ lines l
 
-calculatePositionWithAim :: [[Char]] -> Int
+calculatePositionWithAim :: [Char] -> Int
 calculatePositionWithAim l = fst' position * snd' position
   where
     fst' (x, _, _) = x
     snd' (_, y, _) = y
-    position = foldl (flip changePositionWithAim) (0, 0, 0) . map extractMove $ l
+    position = foldl (flip changePositionWithAim) (0, 0, 0) . map extractMove $ lines l
 
 withAim :: Foldable t => t Move -> (Int, Int, Int)
 withAim = foldl (flip changePositionWithAim) (0, 0, 0)
