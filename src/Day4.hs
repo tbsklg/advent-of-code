@@ -1,23 +1,46 @@
 {-# LANGUAGE LambdaCase #-}
-module Day4 (score) where
+
+module Day4 (score, scorePartTwo) where
 
 import Data.List (transpose)
 import Data.List.Split (splitOn)
 import Data.Maybe (fromMaybe)
+import Debug.Trace (traceShow)
 
 score :: [[Char]] -> Int
-score raw = calculateScore numbers boards
+score raw = calculateScore . firstWinningBoard numbers $ boards
   where
-    calculateScore n b = checkBoards n b []
-      where
-        checkBoards [] [] _ = 0
-        checkBoards [] (b : bs) _ = 0
-        checkBoards (x : xs) [] s = checkBoards xs s []
-        checkBoards (x : xs) (b : bs) s
-          | hasBingo . markField x $ b = x * (sumOfAllUnmarked . markField x $ b)
-          | otherwise = checkBoards (x : xs) bs (markField x b : s)
     numbers = getNumbers . head $ raw
     boards = getBoards 5 . tail . tail $ raw
+
+scorePartTwo :: [[Char]] -> Int
+scorePartTwo raw = calculateScore . lastWinningBoard numbers $ boards
+  where
+    numbers = getNumbers . head $ raw
+    boards = getBoards 5 . tail . tail $ raw
+
+calculateScore :: (Int, [[Maybe Int]]) -> Int
+calculateScore (number, board) = number * sumOfAllUnmarked board
+
+firstWinningBoard :: [Int] -> [[[Maybe Int]]] -> (Int, [[Maybe Int]])
+firstWinningBoard numbers boards = findFirstWinningBoard numbers boards []
+  where
+    findFirstWinningBoard [] [] _ = (0, [])
+    findFirstWinningBoard [] (b : bs) _ = (0, [])
+    findFirstWinningBoard (x : xs) [] s = findFirstWinningBoard xs s []
+    findFirstWinningBoard (x : xs) (b : bs) s
+      | hasBingo . markField x $ b = (x, markField x b)
+      | otherwise = findFirstWinningBoard (x : xs) bs (markField x b : s)
+
+lastWinningBoard :: [Int] -> [[[Maybe Int]]] -> (Int, [[Maybe Int]])
+lastWinningBoard numbers board = last . findLastWinningBoard numbers board $ []
+  where
+    findLastWinningBoard [] [] _ = []
+    findLastWinningBoard [] (b : bs) _ = []
+    findLastWinningBoard (x : xs) [] s = findLastWinningBoard xs s []
+    findLastWinningBoard (x : xs) (b : bs) s
+      | hasBingo . markField x $ b = (x, markField x b) : findLastWinningBoard (x : xs) bs s
+      | otherwise = findLastWinningBoard (x : xs) bs (markField x b : s)
 
 getNumbers :: [Char] -> [Int]
 getNumbers = map (\x -> read x :: Int) . splitOn ","
@@ -26,7 +49,6 @@ getBoards :: Int -> [[Char]] -> [[[Maybe Int]]]
 getBoards _ [] = []
 getBoards size raw = (map (map (\x -> Just (read x :: Int)) . words) . take size $ raw) : getBoards size (drop (size + 1) raw)
 
--- abort when field is marked
 markField :: Int -> [[Maybe Int]] -> [[Maybe Int]]
 markField field =
   map
