@@ -1,10 +1,10 @@
 module Main where
 
 import System.IO ( openFile, hGetContents, IOMode(ReadMode) )
-import Day4 (score, scorePartTwo)
+import Day5 (countOverlappingPoints)
 
 main :: IO ()
 main = do
-  handle <- openFile "app/resources/day4.txt" ReadMode 
+  handle <- openFile "app/resources/day5.txt" ReadMode 
   contents <- hGetContents handle
-  print $  scorePartTwo . lines $ contents
+  print $ countOverlappingPoints . lines $ contents

@@ -64,6 +64,7 @@ hasBingo board = rowBingo board || columnBingo (rotateLeft board)
   where
     rowBingo [] = False
     rowBingo (x : xs) = ((==) 0 . length . filter (/= Nothing) $ x) || rowBingo xs
+    
     columnBingo [] = False
     columnBingo (x : xs) = ((==) 0 . length . filter (/= Nothing) $ x) || columnBingo xs
 
