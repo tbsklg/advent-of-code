@@ -7,4 +7,4 @@ main :: IO ()
 main = do
   handle <- openFile "app/resources/day5.txt" ReadMode 
   contents <- hGetContents handle
-  print $ countOverlappingPoints . lines $ contents
+  print $  countOverlappingPoints . lines $ contents

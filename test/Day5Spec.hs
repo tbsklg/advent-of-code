@@ -6,8 +6,8 @@ import Test.Hspec (Spec, it, shouldBe)
 spec :: Spec
 spec = do
   it "should extract coordinates from raw data" $
-    getCoordinates ["0,9 -> 5,9", "8,0 -> 0,8", "3,1 -> 3,1", "7,3 -> 4,1", "9,4 -> 3,4", "2,2 -> 2,1", "2,2 -> 2,2"]
-      `shouldBe` [Coordinate (Point 0 9) (Point 5 9), Coordinate (Point 9 4) (Point 3 4), Coordinate (Point 2 2) (Point 2 1)]
+    getCoordinates ["0,912 -> 5,912", "8,0 -> 0,8", "3,1 -> 3,1", "7,3 -> 4,1", "9,4 -> 3,4", "2,2 -> 2,1", "2,2 -> 2,2"]
+      `shouldBe` [Coordinate (Point 0 912) (Point 5 912),Coordinate (Point 9 4) (Point 3 4),Coordinate (Point 2 2) (Point 2 1)]
 
   it "should check if coordinate horizontal or vertical" $ do
     isHorizontalOrVertical (Coordinate (Point 7 3) (Point 7 1)) `shouldBe` True

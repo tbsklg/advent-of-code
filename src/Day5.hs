@@ -2,24 +2,24 @@ module Day5 where
 
 import Data.List (group, groupBy, nub, sort, sortBy)
 import Data.Ord (comparing)
-import Debug.Trace (traceShow)
+import Data.List.Split (splitOn)
 
 data Point = Point Int Int deriving (Show, Eq)
 
 data Coordinate = Coordinate Point Point deriving (Show, Eq)
 
-data Direction = Vertical | Horizontal deriving (Show, Eq)
+data Direction = Vertical | Horizontal | No deriving (Show, Eq)
 
 countOverlappingPoints :: [String] -> Int
 countOverlappingPoints =
-  countOccurencesGreaterTwo
+  greaterThanOne
     . sortByOccurencesDEC
     . groupByOccurences
     . flatten
     . getCoordinates
 
-countOccurencesGreaterTwo :: [Int] -> Int
-countOccurencesGreaterTwo = length . filter (>= 2)
+greaterThanOne :: [Int] -> Int
+greaterThanOne = length . filter (> 1)
 
 sortByOccurencesDEC :: [[Point]] -> [Int]
 sortByOccurencesDEC = reverse . sort . map length
@@ -44,7 +44,7 @@ getDirection :: Coordinate -> Direction
 getDirection (Coordinate (Point x1 y1) (Point x2 y2))
   | x1 == x2 && y1 /= y2 = Horizontal
   | y1 == y2 && x1 /= x2 = Vertical
-  | otherwise = traceShow (Coordinate (Point x1 y1) (Point x2 y2)) error "Only horizontal or vertical directions are allowed!"
+  | otherwise = error "Only horizontal or vertical directions are allowed!"
 
 getCoordinates :: [String] -> [Coordinate]
 getCoordinates = filter (not . isSinglePoint) . filter isHorizontalOrVertical . map createCoordinates
@@ -64,5 +64,6 @@ createCoordinates raw = Coordinate firstPoint secondPoint
 createPoint :: String -> Point
 createPoint c = Point x y
   where
-    x = read [head c] :: Int
-    y = read [last c] :: Int
+    x = read (head splitByComma) :: Int
+    y = read (last splitByComma) :: Int
+    splitByComma = splitOn "," c
