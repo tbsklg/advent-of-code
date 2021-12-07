@@ -43,8 +43,8 @@ groupByOccurences =
 flatten :: [Coordinate] -> [Point]
 flatten [] = []
 flatten (x : xs)
-  | horizontal = flattenVertical x ++ flatten xs
-  | vertical = flattenHorizontal x ++ flatten xs
+  | horizontal = flattenHorizontal x ++ flatten xs
+  | vertical = flattenVertical x ++ flatten xs
   | diagonal = flattenDiagonal x ++ flatten xs
   | otherwise = []
   where
@@ -52,11 +52,11 @@ flatten (x : xs)
     vertical = getDirection x == Vertical
     diagonal = getDirection x == Diagonal
 
-flattenVertical :: Coordinate -> [Point]
-flattenVertical (Coordinate (Point x1 y1) (Point x2 y2)) = zipWith Point [x1, x2 ..] [minimum [y1, y2] .. maximum [y1, y2]]
-
 flattenHorizontal :: Coordinate -> [Point]
-flattenHorizontal (Coordinate (Point x1 y1) (Point x2 y2)) = zipWith Point [minimum [x1, x2] .. maximum [x1, x2]] [y1, y2 ..]
+flattenHorizontal (Coordinate (Point x1 y1) (Point x2 y2)) = zipWith Point [x1, x2 ..] [minimum [y1, y2] .. maximum [y1, y2]]
+
+flattenVertical :: Coordinate -> [Point]
+flattenVertical (Coordinate (Point x1 y1) (Point x2 y2)) = zipWith Point [minimum [x1, x2] .. maximum [x1, x2]] [y1, y2 ..]
 
 flattenDiagonal :: Coordinate -> [Point]
 flattenDiagonal (Coordinate (Point x1 y1) (Point x2 y2))
