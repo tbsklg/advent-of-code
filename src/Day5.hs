@@ -1,14 +1,14 @@
 module Day5 where
 
 import Data.List (group, groupBy, nub, sort, sortBy)
-import Data.Ord (comparing)
 import Data.List.Split (splitOn)
+import Data.Ord (comparing)
 
 data Point = Point Int Int deriving (Show, Eq)
 
 data Coordinate = Coordinate Point Point deriving (Show, Eq)
 
-data Direction = Vertical | Horizontal | No deriving (Show, Eq)
+data Direction = Vertical | Horizontal | Diagonal deriving (Show, Eq)
 
 countOverlappingPoints :: [String] -> Int
 countOverlappingPoints =
@@ -16,6 +16,16 @@ countOverlappingPoints =
     . sortByOccurencesDEC
     . groupByOccurences
     . flatten
+    . filter (\x -> isHorizontal x || isVertical x)
+    . getCoordinates
+
+countOverlappingPointsPartTwo :: [String] -> Int
+countOverlappingPointsPartTwo =
+  greaterThanOne
+    . sortByOccurencesDEC
+    . groupByOccurences
+    . flatten
+    . filter (\x -> isHorizontal x || isVertical x || isDiagonal x)
     . getCoordinates
 
 greaterThanOne :: [Int] -> Int
@@ -32,25 +42,57 @@ groupByOccurences =
 
 flatten :: [Coordinate] -> [Point]
 flatten [] = []
-flatten ((Coordinate (Point x1 y1) (Point x2 y2)) : xs)
-  | horizontal = zipWith Point [x1, x2 ..] [minimum [y1, y2] .. maximum [y1, y2]] ++ flatten xs
-  | vertical = zipWith Point [minimum [x1, x2] .. maximum [x1, x2]] [y1, y2 ..] ++ flatten xs
-  | otherwise = error "Direction is not allowed!"
+flatten (x : xs)
+  | horizontal = flattenVertical x ++ flatten xs
+  | vertical = flattenHorizontal x ++ flatten xs
+  | diagonal = flattenDiagonal x ++ flatten xs
+  | otherwise = []
   where
-    horizontal = getDirection (Coordinate (Point x1 y1) (Point x2 y2)) == Horizontal
-    vertical = getDirection (Coordinate (Point x1 y1) (Point x2 y2)) == Vertical
+    horizontal = getDirection x == Horizontal
+    vertical = getDirection x == Vertical
+    diagonal = getDirection x == Diagonal
+
+flattenVertical :: Coordinate -> [Point]
+flattenVertical (Coordinate (Point x1 y1) (Point x2 y2)) = zipWith Point [x1, x2 ..] [minimum [y1, y2] .. maximum [y1, y2]]
+
+flattenHorizontal :: Coordinate -> [Point]
+flattenHorizontal (Coordinate (Point x1 y1) (Point x2 y2)) = zipWith Point [minimum [x1, x2] .. maximum [x1, x2]] [y1, y2 ..]
+
+flattenDiagonal :: Coordinate -> [Point]
+flattenDiagonal (Coordinate (Point x1 y1) (Point x2 y2))
+  | x1 < x2 = zipWith Point [x1 .. x2] calculateY
+  | otherwise = zipWith Point [x1, (x1 - 1) .. x2] calculateY
+  where
+    calculateY
+      | y1 < y2 = [y1 .. y2]
+      | otherwise = [y1, (y1 - 1) .. y2]
 
 getDirection :: Coordinate -> Direction
 getDirection (Coordinate (Point x1 y1) (Point x2 y2))
   | x1 == x2 && y1 /= y2 = Horizontal
   | y1 == y2 && x1 /= x2 = Vertical
-  | otherwise = error "Only horizontal or vertical directions are allowed!"
+  | otherwise = Diagonal
+
+filterHorizontalOrVertical :: [Coordinate] -> [Coordinate]
+filterHorizontalOrVertical = filter isHorizontalOrVertical
+
+filterHorizontalOrVerticalOrDiagonal :: [Coordinate] -> [Coordinate]
+filterHorizontalOrVerticalOrDiagonal = filter (\x -> isHorizontal x || isVertical x || isDiagonal x)
 
 getCoordinates :: [String] -> [Coordinate]
-getCoordinates = filter (not . isSinglePoint) . filter isHorizontalOrVertical . map createCoordinates
+getCoordinates = filter (not . isSinglePoint) . map createCoordinates
 
 isSinglePoint :: Coordinate -> Bool
 isSinglePoint ((Coordinate point1 point2)) = point1 == point2
+
+isDiagonal :: Coordinate -> Bool
+isDiagonal (Coordinate (Point x1 y1) (Point x2 y2)) = abs (x1 - x2) == abs (y1 - y2)
+
+isVertical :: Coordinate -> Bool
+isVertical (Coordinate (Point x1 y1) (Point x2 y2)) = y1 == y2
+
+isHorizontal :: Coordinate -> Bool
+isHorizontal (Coordinate (Point x1 y1) (Point x2 y2)) = x1 == x2
 
 isHorizontalOrVertical :: Coordinate -> Bool
 isHorizontalOrVertical (Coordinate (Point x1 y1) (Point x2 y2)) = x1 == x2 || y1 == y2
