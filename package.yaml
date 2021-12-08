@@ -26,6 +26,8 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+    - containers
 
 executables:
   advent-of-code-exe:
