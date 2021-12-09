@@ -3,31 +3,26 @@ module Day6 where
 import Data.List.Split (splitOn)
 import Data.Map (empty, fromList, fromListWith, insertWith, keys, toList, unionWith)
 import Data.Maybe (fromMaybe)
-import Debug.Trace (traceShow)
 
 countFishes :: Int -> [[Char]] -> Int
-countFishes days = count' days . fishes
+countFishes days raw = count' days (frequencies . fishes $ raw)
   where
     count' _ [] = 0
-    count' 0 l = traceShow (frequencies l) length l
-    count' d l = count' (d - 1) . decreaseFish $ l
-
-decreaseFish :: (Eq a, Num a) => [a] -> [a]
-decreaseFish l
-  | 0 `elem` l = decreaseByOne ++ replicate (length . filter (== 0) $ l) 8
-  | otherwise = decreaseByOne
-  where
-    decreaseByOne = map (\x -> if x == 0 then 6 else x - 1) l
+    count' 0 l = sumUp l
+    count' d l = count' (d - 1) . populate $ l
 
 fishes :: [[Char]] -> [Int]
 fishes = map (\x -> read x :: Int) . splitOn "," . head
 
-decrease :: [(Int, Int)] -> [(Int, Int)]
-decrease m = toList . decrease $ keys . fromList $ m
+populate :: [(Int, Int)] -> [(Int, Int)]
+populate m = toList . populate $ keys . fromList $ m
   where
-    decrease [] = empty
-    decrease (x : xs) = unionWith (+) (insertWith (+) (x - 1) by empty) (decrease xs)
+    populate [] = empty
+    populate (x : xs) = unionWith (+) next (populate xs)
       where
+        next
+          | x == 0 = unionWith (+) (insertWith (+) 8 by empty) (insertWith (+) 6 by empty)
+          | otherwise = insertWith (+) (x -1) by empty
         by = fromMaybe 0 (lookup x m)
 
 sumUp :: [(Int, Int)] -> Int

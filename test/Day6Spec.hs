@@ -1,6 +1,6 @@
 module Day6Spec where
 
-import Day6 (countFishes, decrease, fishes, frequencies, sumUp)
+import Day6 (countFishes, populate, fishes, frequencies, sumUp)
 import Test.Hspec (Spec, it, shouldBe)
 
 spec :: Spec
@@ -19,10 +19,8 @@ spec = do
   it "should calculate sum of all frequencies" $ do
     sumUp [(1, 1), (2, 1), (3, 3), (4, 1)] `shouldBe` 6
 
-  it "should decrease by one" $ do
-    decrease [(1, 1), (2, 1), (3, 2), (4, 1)] `shouldBe` [(0, 1), (1, 1), (2, 2), (3, 1)]
-    decrease [(0, 1), (1, 1), (2, 2), (3, 1)] `shouldBe` [(0, 1), (1, 2), (2, 1), (6, 1), (8, 1)]
-
--- 1 2 3 3 4
--- 0 1 2 2 3
--- 6 0 1 1 2 8
+  it "should populate by one" $ do
+    populate [(1, 1), (2, 1), (3, 2), (4, 1)] `shouldBe` [(0, 1), (1, 1), (2, 2), (3, 1)]
+    populate [(0, 1), (1, 1), (2, 2), (3, 1)] `shouldBe` [(0, 1), (1, 2), (2, 1), (6, 1), (8, 1)]
+    populate [(0, 4), (1, 5), (2, 2), (3, 1)] `shouldBe` [(0, 5), (1, 2), (2, 1), (6, 4), (8, 4)]
+    populate [(0, 4), (1, 0), (2, 2), (3, 1)] `shouldBe` [(0, 0), (1, 2), (2, 1), (6, 4), (8, 4)]
