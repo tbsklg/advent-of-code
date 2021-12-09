@@ -1,10 +1,10 @@
 module Main where
 
 import System.IO ( openFile, hGetContents, IOMode(ReadMode) )
-import Day6 (countFishes)
+import Day7 (leastFuel)
 
 main :: IO ()
 main = do
-  handle <- openFile "app/resources/day6.txt" ReadMode 
+  handle <- openFile "app/resources/day7.txt" ReadMode 
   contents <- hGetContents handle
-  print $ countFishes 256 . lines $ contents
+  print $ leastFuel . lines $ contents
