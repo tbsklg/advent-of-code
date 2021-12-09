@@ -4,17 +4,17 @@ import Data.List.Split (splitOn)
 import Data.Map (empty, fromList, fromListWith, insertWith, keys, toList, unionWith)
 import Data.Maybe (fromMaybe)
 
-countFishes :: Int -> [[Char]] -> Int
+countFishes :: Integer -> [[Char]] -> Integer
 countFishes days raw = count' days (frequencies . fishes $ raw)
   where
     count' _ [] = 0
     count' 0 l = sumUp l
     count' d l = count' (d - 1) . populate $ l
 
-fishes :: [[Char]] -> [Int]
-fishes = map (\x -> read x :: Int) . splitOn "," . head
+fishes :: [[Char]] -> [Integer]
+fishes = map (\x -> read x :: Integer) . splitOn "," . head
 
-populate :: [(Int, Int)] -> [(Int, Int)]
+populate :: [(Integer, Integer)] -> [(Integer, Integer)]
 populate m = toList . populate $ keys . fromList $ m
   where
     populate [] = empty
@@ -25,8 +25,8 @@ populate m = toList . populate $ keys . fromList $ m
           | otherwise = insertWith (+) (x -1) by empty
         by = fromMaybe 0 (lookup x m)
 
-sumUp :: [(Int, Int)] -> Int
+sumUp :: [(Integer, Integer)] -> Integer
 sumUp = sum . map snd
 
-frequencies :: [Int] -> [(Int, Int)]
+frequencies :: [Integer] -> [(Integer, Integer)]
 frequencies i = toList $ fromListWith (+) [(c, 1) | c <- i]
