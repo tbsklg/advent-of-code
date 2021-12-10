@@ -16,8 +16,8 @@ parseFuel = map (\x -> read x :: Int) . splitOn "," . head
 
 moveBySumOfN :: Int -> [Int] -> [Int]
 moveBySumOfN n = map (\x -> gauss (abs (x - n)))
-    where
-        gauss x = (x * (x + 1)) `div` 2
+  where
+    gauss x = (x * (x + 1)) `div` 2
 
 moveByN :: Int -> [Int] -> [Int]
 moveByN n = map (\x -> abs (x - n))

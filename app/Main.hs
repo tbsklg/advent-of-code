@@ -1,10 +1,10 @@
 module Main where
 
 import System.IO ( openFile, hGetContents, IOMode(ReadMode) )
-import Day7 (leastFuel, leastFuelPartTwo)
+import Day8 (solve)
 
 main :: IO ()
 main = do
-  handle <- openFile "app/resources/day7.txt" ReadMode 
+  handle <- openFile "app/resources/day8.txt" ReadMode 
   contents <- hGetContents handle
-  print $ leastFuelPartTwo . lines $ contents
+  print $ solve . lines $ contents
