@@ -1,10 +1,10 @@
 module Main where
 
-import System.IO ( openFile, hGetContents, IOMode(ReadMode) )
-import Day8 (solve)
+import Day8 (solvePartTwo)
+import System.IO (IOMode (ReadMode), hGetContents, openFile)
 
 main :: IO ()
 main = do
-  handle <- openFile "app/resources/day8.txt" ReadMode 
+  handle <- openFile "app/resources/day8.txt" ReadMode
   contents <- hGetContents handle
-  print $ solve . lines $ contents
+  print $ solvePartTwo . lines $ contents
