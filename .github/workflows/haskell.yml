@@ -21,10 +21,7 @@ jobs:
           cabal-version: '2.4.0.1'
           enable-stack: true
           stack-version: '2.7.1'
-      
-      - name: Cache
-        uses: actions/cache@v2.1.7
-      
+
       - name: Build solution
         run: stack build
 
