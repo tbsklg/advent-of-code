@@ -1,6 +1,6 @@
 module Day12Spec where
 
-import Day12 (countPaths, extractPath, groupNeighbours, countPathsPartTwo)
+import Day12 (countPaths, countPathsPartTwo, extractPath, groupNeighbours)
 import Test.Hspec (Spec, it, shouldBe)
 
 spec :: Spec
@@ -26,11 +26,11 @@ spec = do
 
     countPaths [("HN", ["end", "kj", "dc"]), ("LN", ["dc"]), ("dc", ["HN", "end", "kj", "LN"]), ("kj", ["dc", "HN", "sa"]), ("sa", ["kj"]), ("start", ["kj", "dc", "HN"])] `shouldBe` 19
 
-  -- it "should count paths" $ do
-    -- countPathsPartTwo [("start", ["A"]), ("A", ["end"])] `shouldBe` 1
-    -- countPathsPartTwo [("start", ["A", "b"]), ("A", ["end"]), ("b", ["end"])] `shouldBe` 2
-    -- countPathsPartTwo [("start", ["A", "b"]), ("A", ["end"]), ("b", ["end", "d"]), ("d", ["b"])] `shouldBe` 3
-    -- countPathsPartTwo [("start", ["A", "b"]), ("A", ["end", "c"]), ("b", ["end", "d"]), ("d", ["b"]), ("c", ["A"])] `shouldBe` 3
-    -- countPathsPartTwo [("start", ["A", "b"]), ("A", ["end", "c", "b"]), ("b", ["end", "d", "A"]), ("d", ["b"]), ("c", ["A"])] `shouldBe` 10
+  it "should count paths" $ do
+    countPathsPartTwo [("start", ["A"]), ("A", ["end"])] `shouldBe` 1
+    countPathsPartTwo [("start", ["A", "b"]), ("A", ["end"]), ("b", ["end"])] `shouldBe` 2
+    countPathsPartTwo [("start", ["A", "b"]), ("A", ["end"]), ("b", ["end", "d"]), ("d", ["b"])] `shouldBe` 3
+    countPathsPartTwo [("start", ["A", "b"]), ("A", ["c", "end"]), ("b", ["d", "end"]), ("d", ["b"]), ("c", ["A"])] `shouldBe` 5
+    countPathsPartTwo [("start", ["A", "b"]), ("A", ["end", "c", "b"]), ("b", ["end", "d", "A"]), ("d", ["b"]), ("c", ["A"])] `shouldBe` 36
 
-    -- countPathsPartTwo [("HN", ["end", "kj", "dc"]), ("LN", ["dc"]), ("dc", ["HN", "end", "kj", "LN"]), ("kj", ["dc", "HN", "sa"]), ("sa", ["kj"]), ("start", ["kj", "dc", "HN"])] `shouldBe` 19  
+    countPathsPartTwo [("HN", ["end", "kj", "dc"]), ("LN", ["dc"]), ("dc", ["HN", "end", "kj", "LN"]), ("kj", ["dc", "HN", "sa"]), ("sa", ["kj"]), ("start", ["kj", "dc", "HN"])] `shouldBe` 103
