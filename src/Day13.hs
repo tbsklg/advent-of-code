@@ -7,10 +7,29 @@ import Data.Set (fromList, toList)
 data Instruction = Horizontal Int | Vertical Int deriving (Show, Eq)
 
 solve :: [[Char]] -> Int
-solve raw = length . foldPoints points $ instruction
+solve raw = length . foldPoints dots $ instruction
   where
-    points = fst . transform . extract $ raw
+    dots = fst . transform . extract $ raw
     instruction = head . snd . transform . extract $ raw
+
+solvePartTwo :: [[Char]] -> [Char]
+solvePartTwo raw = print' . foldl foldPoints dots $ instructions
+  where
+    dots = fst . transform . extract $ raw
+    instructions = snd . transform . extract $ raw
+
+print' :: [(Int, Int)] -> [Char]
+print' dots = printRows 0 0
+  where
+    maxRows = 250
+    maxCols = 250
+
+    printRows row col
+      | row == maxRows = ""
+      | col == maxCols = "\n" ++ printRows (row + 1) 0
+      | (row, col) `elem` dots = "#" ++ printRows row (col + 1)
+      | (row, col) `notElem` dots = "." ++ printRows row (col + 1)
+      | otherwise = printRows row col
 
 extract :: [[Char]] -> ([[Char]], [[Char]])
 extract raw = (dots, instructions)
@@ -33,17 +52,17 @@ transform raw = (dots, instructions)
         direction _ _ = error "Bad Instruction"
 
 foldPoints :: [(Int, Int)] -> Instruction -> [(Int, Int)]
-foldPoints points (Vertical v) = toList . fromList $ movedPoints ++ otherPoints
+foldPoints dots (Vertical v) = toList . fromList $ movedPoints ++ otherPoints
   where
     movedPoints = map move relevantPoints
-    relevantPoints = fst . partition isRelevant $ points
-    otherPoints = snd . partition isRelevant $ points
+    relevantPoints = fst . partition isRelevant $ dots
+    otherPoints = snd . partition isRelevant $ dots
     isRelevant (x, y) = x > v
     move (x, y) = (abs (x - 2 * v), y)
-foldPoints points (Horizontal h) = toList . fromList $ movedPoints ++ otherPoints
+foldPoints dots (Horizontal h) = toList . fromList $ movedPoints ++ otherPoints
   where
     movedPoints = map move relevantPoints
-    relevantPoints = fst . partition isRelevant $ points
-    otherPoints = snd . partition isRelevant $ points
+    relevantPoints = fst . partition isRelevant $ dots
+    otherPoints = snd . partition isRelevant $ dots
     isRelevant (x, y) = y > h
     move (x, y) = (x, abs (y - 2 * h))
