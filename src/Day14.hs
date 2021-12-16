@@ -1,10 +1,12 @@
 module Day14 where
 
+import qualified Data.Bifunctor
 import Data.List.Split (splitOn)
 import Data.Map (empty, fromList, fromListWith, insertWith, toList, unionWith)
-import Data.Maybe ( fromMaybe )
+import Data.Maybe (fromMaybe)
+import Debug.Trace (traceShow)
 
-solve :: Int -> [[Char]]  -> Int
+solve :: Int -> [[Char]] -> Int
 solve times raw = mostCommon - leastCommon
   where
     mostCommon = maximum . map snd $ polymer'
@@ -41,12 +43,13 @@ polymer rules template times = polymer' (getRulesFromTemplate template) (frequen
         nextRulesCount = extractRules . executeRules rules $ rulesCount
 
 countCharsFromRules :: [([Char], [Char])] -> [([Char], Int)] -> [(Char, Int)]
-countCharsFromRules rules input = frequencies . concatMap (\x -> [last . take 2 $ x]) $ executedRules
+countCharsFromRules rules input = toList . fromListWith (+) $ executedRules
   where
-    executedRules = executeRules rules input
+    executedRules = map (Data.Bifunctor.first getSecondChar) . executeRules rules $ input
+    getSecondChar x = x !! 1
 
-extractRules :: [[Char]] -> [([Char], Int)]
-extractRules = frequencies . concatMap (\x -> [first x, second x])
+extractRules :: [([Char], Int)] -> [([Char], Int)]
+extractRules = toList . fromListWith (+) . concatMap (\ (key, value) -> [(first key, value), (second key, value)])
   where
     first x = head x : [head . tail $ x]
     second x = (head . tail $ x) : [last x]
@@ -58,15 +61,12 @@ getRulesFromTemplate input = countRules' input empty
     countRules' (x : y : ys) counts = countRules' (y : ys) (insertWith (+) (x : [y]) 1 counts)
     countRules' _ _ = []
 
-executeRules :: [([Char], [Char])] -> [([Char], Int)] -> [[Char]]
-executeRules rules = concatMap (executeRule rules)
+executeRules :: [([Char], [Char])] -> [([Char], Int)] -> [([Char], Int)]
+executeRules rules = toList . fromList . map (executeRule rules)
 
-executeRule :: [([Char], [Char])] -> ([Char], Int) -> [[Char]]
-executeRule rules execution = execute' template times
+executeRule :: [([Char], [Char])] -> ([Char], Int) -> ([Char], Int)
+executeRule rules execution = (transformation, times)
   where
-    execute' _ 0 = []
-    execute' template times = transformation : execute' template (times -1)
-
     template = fst execution
     times = snd execution
     ruleOutput = fromMaybe "" (lookup template rules)

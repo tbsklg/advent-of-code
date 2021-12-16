@@ -7,4 +7,4 @@ main :: IO ()
 main = do
   handle <- openFile "app/resources/day14.txt" ReadMode
   contents <- hGetContents handle
-  print $ solve 10 . lines $ contents
+  print $ solve 40 . lines $ contents
