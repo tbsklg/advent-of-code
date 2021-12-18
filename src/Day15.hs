@@ -1,12 +1,13 @@
 module Day15 where
 
 import Data.Function (on)
-import Data.List (sortBy, sortOn)
+import Data.List (sortBy, sortOn, transpose)
 import Data.Maybe (catMaybes)
 import Data.Ord (comparing)
 
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Debug.Trace
 
 newtype ColumnIndex = ColumnIndex Int deriving (Show, Eq, Ord)
 
@@ -21,13 +22,34 @@ data Point = Point {coordinates :: Coordinates, value :: Int} deriving (Show, Eq
 solve :: [[Char]] -> Int
 solve raw = lowestRisk (Grid raw)
 
+solvePartTwo :: [[Char]] -> Int
+solvePartTwo raw = lowestRisk . expandGrid $ Grid raw
+
+expandGrid :: Grid -> Grid
+expandGrid (Grid grid) = Grid (concat . expandRow . map expandCell $ grid)
+
+expandRow :: [[Char]] -> [[[Char]]]
+expandRow = take 5 . iterate updateRisks
+  where
+    updateRisks [] = []
+    updateRisks (x:xs) = concatMap (show . fixRisk) x : updateRisks xs
+    fixRisk x = if asInt x == 9 then 1 else asInt x + 1
+
+expandCell :: [Char] -> [Char]
+expandCell = concat . take 5 . iterate updateRisks
+  where
+    updateRisks s = concatMap (show . fixRisk) s
+    fixRisk x = if asInt x == 9 then 1 else asInt x + 1
+
+-- todo: improve performance by indentifying equal costs
+
 -- see https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 lowestRisk :: Grid -> Int
-lowestRisk (Grid grid) = move initialQueue M.empty (S.fromList [fst start])
+lowestRisk (Grid grid) = move initialQueue M.empty (S.fromList [initialCoordinates])
   where
     move priorityQueue costs visited
       | isTarget = currentDistance
-      | currentPoint `elem` visited = move (tail priorityQueue) costs visited
+      | currentCoordinates `elem` visited = move (tail priorityQueue) costs visited
       | otherwise = move nextQueue (M.insert currentCoordinates currentDistance costs) nextVisited
       where
         currentPoint = fst . head $ priorityQueue
@@ -37,9 +59,10 @@ lowestRisk (Grid grid) = move initialQueue M.empty (S.fromList [fst start])
 
         nextPoints = map (\point -> (point, currentDistance + value point)) . neighbours currentCoordinates $ Grid grid
         nextQueue = sortByDistance (tail priorityQueue ++ nextPoints)
-        nextVisited = S.insert currentPoint visited
+        nextVisited = S.insert currentCoordinates visited
 
     initialQueue = sortByDistance . map (\point -> (point, value point)) . neighbours (coordinates (fst start)) $ Grid grid
+    initialCoordinates = coordinates . fst $ start
     start = ((Point {coordinates = Coordinates {columnIndex = 0, rowIndex = 0}, value = 1}), 0)
     dim = length grid - 1
 

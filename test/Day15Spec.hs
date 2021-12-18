@@ -1,6 +1,6 @@
 module Day15Spec where
 
-import Day15 (ColumnIndex (..), Coordinates (..), Grid (..), Point (..), RowIndex (..), neighbours, lowestRisk)
+import Day15 (ColumnIndex (..), Coordinates (..), Grid (..), Point (..), RowIndex (..), neighbours, lowestRisk, expandCell, expandGrid)
 import Test.Hspec (Spec, it, shouldBe)
 
 spec :: Spec
@@ -12,4 +12,12 @@ spec = do
   it "should move to next neighbour" $ do
     lowestRisk grid `shouldBe` 40
 
+  it "should expand cell" $ do
+    expandCell "123" `shouldBe` "123234345456567"
+    expandCell "789" `shouldBe` "789891912123234"
+
+  it "should increase grid" $
+    expandGrid grid `shouldBe` Grid []
+  
 grid = Grid ["1163751742", "1381373672", "2136511328", "3694931569", "7463417111", "1319128137", "1359912421", "3125421639", "1293138521", "2311944581"]
+smallGrid = ["12", "56"] 
