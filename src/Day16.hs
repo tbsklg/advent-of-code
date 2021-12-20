@@ -2,21 +2,49 @@ module Day16 where
 
 import Control.Exception.Base (patError)
 import Data.Char (digitToInt)
-import Debug.Trace (traceShow)
+import Data.List (iterate')
 import Numeric (readHex, readInt)
 import Text.Printf (printf)
 
 solve :: [Char] -> Int
-solve = sum . versions . convert
+solve raw = sum . parse (convert raw) $ (-1)
 
-versions :: [Char] -> [Int]
-versions raw
-  | packetTypeId raw == 4 = (packetVersion' . literalValue $ raw) : versions (drop (length . literalValue $raw) raw)
-  | otherwise = (packetVersion' . operatorValue $ raw) : versions (drop (length . operatorValue $ raw) raw)
+parse :: [Char] -> Int -> [Int]
+parse [] counter = []
+parse package counter
+  | not isValid = []
+  | counter == 0 = parse package (-1)
+  | typeId == 4 = version : literalValue package counter
+  | otherwise = version : operatorValue package counter
   where
-    header = take headerLength raw
-    packetVersion' x = packetVersion x
-    packetTypeId' = packetTypeId raw
+    header = take headerLength package
+    version = packetVersion header
+    typeId = packetTypeId header
+
+    isValid = (read package :: Int) /= 0 && package /= ""
+
+literalValue :: [Char] -> Int -> [Int]
+literalValue payload counter = getPackages (drop 6 payload)
+  where
+    getPackages [] = []
+    getPackages current
+      | startsWithOne = getPackages (drop 5 current)
+      | startsWithZero = parse (drop 5 current) (counter - 1)
+      | otherwise = error "Invalid packet"
+      where
+        startsWithOne = (==) '1' . head . drop headerLength $ payload
+        startsWithZero = (==) '0' (payload !! max 0 headerLength)
+
+operatorValue :: [Char] -> Int -> [Int]
+operatorValue package counter
+  | lengthTypeId package == '0' = parse (take packetLength . drop 22 $ package) counter ++ parse (drop (22 + packetLength) package) (counter - 1)
+  | lengthTypeId package == '1' = parse (drop 18 package) numberOfPackages
+  | otherwise = error "Unsupported operator package!"
+  where
+    lengthTypeId = (!! 6)
+
+    packetLength = binToDec . take 15 . drop 7 $ package
+    numberOfPackages = binToDec . take 11 . drop 7 $ package
 
 convert :: [Char] -> [Char]
 convert = concatMap hexToBin
@@ -27,33 +55,8 @@ packetVersion = binToDec . take 3
 packetTypeId :: [Char] -> Int
 packetTypeId = binToDec . take 3 . drop 3
 
-literalValue :: [Char] -> [Char]
-literalValue raw = take headerLength raw ++ (concat . getValues $ drop 6 raw)
-  where
-    getValues [] = []
-    getValues bin
-      | startsWithOne = drop 1 . take 5 $ bin : getValues (drop 5 bin)
-      | startsWithZero = drop 1 . take 5 $ bin : getValues []
-      | otherwise = error "Invalid packet"
-      where
-        startsWithOne = (==) '1' . head $ bin
-        startsWithZero = (==) '0' . head $ bin
-
 headerLength :: Int
 headerLength = 6
-
-operatorValue :: [Char] -> [Char]
-operatorValue raw = take headerLength raw ++ (concat . getValues $ drop 6 raw)
-  where
-    getValues [] = []
-    getValues bin
-      | lengthTypeId bin == '0' = [take (packetLength + 16) bin]
-      | lengthTypeId bin == '1' = take (numberOfPackages - 1) . iterate literalValue  $ bin
-      | otherwise = error ""
-      where
-        packetLength = binToDec . take 15 . drop 1 $ bin
-        numberOfPackages = binToDec . take 11 . drop 1 $ bin
-        lengthTypeId = (!! 0)
 
 hexToBin :: Char -> String
 hexToBin c =
