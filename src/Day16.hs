@@ -7,15 +7,15 @@ import Numeric (readHex, readInt)
 import Text.Printf (printf)
 
 solve :: [Char] -> Int
-solve raw = sum . parse (convert raw) $ (-1)
+solve raw = parse (convert raw) (-1)
 
-parse :: [Char] -> Int -> [Int]
-parse [] counter = []
+parse :: [Char] -> Int -> Int
+parse [] counter = 0
 parse package counter
-  | not isValid = []
+  | not isValid = 0
   | counter == 0 = parse package (-1)
-  | typeId == 4 = version : literalValue package counter
-  | otherwise = version : operatorValue package counter
+  | typeId == 4 = version + literalValue package counter
+  | otherwise = version + operatorValue package counter
   where
     header = take headerLength package
     version = packetVersion header
@@ -23,23 +23,23 @@ parse package counter
 
     isValid = (read package :: Int) /= 0 && package /= ""
 
-literalValue :: [Char] -> Int -> [Int]
+literalValue :: [Char] -> Int -> Int
 literalValue payload counter = getPackages (drop 6 payload)
   where
-    getPackages [] = []
+    getPackages [] = 0
     getPackages current
       | startsWithOne = getPackages (drop 5 current)
       | startsWithZero = parse (drop 5 current) (counter - 1)
-      | otherwise = error "Invalid packet"
+      | otherwise = error "Invalid literal packet!"
       where
-        startsWithOne = (==) '1' . head . drop headerLength $ payload
-        startsWithZero = (==) '0' (payload !! max 0 headerLength)
+        startsWithOne = (==) '1' . head $ current
+        startsWithZero = (==) '0' . head $ current
 
-operatorValue :: [Char] -> Int -> [Int]
+operatorValue :: [Char] -> Int -> Int
 operatorValue package counter
-  | lengthTypeId package == '0' = parse (take packetLength . drop 22 $ package) counter ++ parse (drop (22 + packetLength) package) (counter - 1)
+  | lengthTypeId package == '0' = parse (take packetLength . drop 22 $ package) (-1) + parse (drop (22 + packetLength) package) (counter - 1)
   | lengthTypeId package == '1' = parse (drop 18 package) numberOfPackages
-  | otherwise = error "Unsupported operator package!"
+  | otherwise = error "Invalid operator packet!"
   where
     lengthTypeId = (!! 6)
 
