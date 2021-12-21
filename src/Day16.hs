@@ -1,50 +1,82 @@
 module Day16 where
 
-import Control.Exception.Base (patError)
 import Data.Char (digitToInt)
 import Data.List (iterate')
-import Numeric (readHex, readInt)
-import Text.Printf (printf)
+import Numeric ( readHex, readInt )
+import Text.Printf ( printf )
+
+data Packet = Packet {version :: Int, typeId :: Int, packetData :: PacketData} | Nil deriving (Show, Eq, Ord)
+
+data PacketData = Packets [Packet] | Literal Int deriving (Show, Eq, Ord)
 
 solve :: [Char] -> Int
-solve raw = parse (convert raw) (-1)
+solve = versions
+    . parsePackets
+    . convert
 
-parse :: [Char] -> Int -> Int
-parse [] counter = 0
-parse package counter
-  | not isValid = 0
-  | counter == 0 = parse package (-1)
-  | typeId == 4 = version + literalValue package counter
-  | otherwise = version + operatorValue package counter
+parsePackets :: [Char] -> [Packet]
+parsePackets [] = []
+parsePackets package = p : parsePackets remaining
   where
-    header = take headerLength package
+    (p, remaining) = createPacket package
+
+createPacket :: [Char] -> (Packet, [Char])
+createPacket raw =
+  ( Packet
+      { version = version,
+        typeId = typeId,
+        packetData = pd
+      },
+    next
+  )
+  where
+    (pd, remaining) = parsePackageData typeId (drop headerLength raw)
+
+    next = if remaining == "" || (read remaining :: Int) == 0 then [] else remaining
+
+    header = take headerLength raw
     version = packetVersion header
     typeId = packetTypeId header
 
-    isValid = (read package :: Int) /= 0 && package /= ""
+parsePackageData :: Int -> [Char] -> (PacketData, [Char])
+parsePackageData 4 = parseLiteral
+parsePackageData _ = parseOperator
 
-literalValue :: [Char] -> Int -> Int
-literalValue payload counter = getPackages (drop 6 payload)
+parseLiteral :: [Char] -> (PacketData, [Char])
+parseLiteral = parsePackets' []
   where
-    getPackages [] = 0
-    getPackages current
-      | startsWithOne = getPackages (drop 5 current)
-      | startsWithZero = parse (drop 5 current) (counter - 1)
-      | otherwise = error "Invalid literal packet!"
-      where
-        startsWithOne = (==) '1' . head $ current
-        startsWithZero = (==) '0' . head $ current
+    parsePackets' values (a1 : a2 : a3 : a4 : a5 : xs)
+      | a1 == '1' = parsePackets' (values ++ [a2, a3, a4, a5]) xs
+      | otherwise = (Literal (binToDec (values ++ [a2, a3, a4, a5])), xs)
+    parsePackets' _ _ = error "Invalid literal!"
 
-operatorValue :: [Char] -> Int -> Int
-operatorValue package counter
-  | lengthTypeId package == '0' = parse (take packetLength . drop 22 $ package) (-1) + parse (drop (22 + packetLength) package) (counter - 1)
-  | lengthTypeId package == '1' = parse (drop 18 package) numberOfPackages
-  | otherwise = error "Invalid operator packet!"
+parseOperator :: [Char] -> (PacketData, [Char])
+parseOperator (lti : xs)
+  | lti == '0' =
+    ( Packets
+        (parsePackets (take packetLength . drop 15 $ xs)),
+      drop (15 + packetLength) xs
+    )
+  | lti == '1' = (Packets packets, remaining)
+  | otherwise = error ""
   where
-    lengthTypeId = (!! 6)
+    (packets, remaining) = parsePacketsTimes numberOfPackages (drop 11 xs)
 
-    packetLength = binToDec . take 15 . drop 7 $ package
-    numberOfPackages = binToDec . take 11 . drop 7 $ package
+    packetLength = binToDec . take 15 $ xs
+    numberOfPackages = binToDec . take 11 $ xs
+parseOperator _ = error "Invalid operator packet!"
+
+parsePacketsTimes :: (Eq a, Num a) => a -> [Char] -> ([Packet], [Char])
+parsePacketsTimes 0 xs = ([], xs)
+parsePacketsTimes n xs = (packet : packages, remaining')
+  where
+    (packages, remaining') = parsePacketsTimes (n -1) remaining
+    (packet, remaining) = createPacket xs
+
+versions :: [Packet] -> Int
+versions (Packet {version = v, packetData = Packets pd} : xs) = versions xs + v + versions pd
+versions (Packet {version = v, packetData = Literal _} : xs) = v + versions xs
+versions _ = 0
 
 convert :: [Char] -> [Char]
 convert = concatMap hexToBin
