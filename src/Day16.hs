@@ -2,15 +2,23 @@ module Day16 where
 
 import Data.Char (digitToInt)
 import Data.List (iterate')
-import Numeric ( readHex, readInt )
-import Text.Printf ( printf )
+import Numeric (readHex, readInt)
+import Text.Printf (printf)
 
 data Packet = Packet {version :: Int, typeId :: Int, packetData :: PacketData} | Nil deriving (Show, Eq, Ord)
 
 data PacketData = Packets [Packet] | Literal Int deriving (Show, Eq, Ord)
 
 solve :: [Char] -> Int
-solve = versions
+solve =
+  versions
+    . parsePackets
+    . convert
+
+solvePartTwo :: [Char] -> Int
+solvePartTwo =
+  operations
+    . head
     . parsePackets
     . convert
 
@@ -58,7 +66,7 @@ parseOperator (lti : xs)
       drop (15 + packetLength) xs
     )
   | lti == '1' = (Packets packets, remaining)
-  | otherwise = error ""
+  | otherwise = error "Invalid operator packet!"
   where
     (packets, remaining) = parsePacketsTimes numberOfPackages (drop 11 xs)
 
@@ -77,6 +85,21 @@ versions :: [Packet] -> Int
 versions (Packet {version = v, packetData = Packets pd} : xs) = versions xs + v + versions pd
 versions (Packet {version = v, packetData = Literal _} : xs) = v + versions xs
 versions _ = 0
+
+operations :: Packet -> Int
+operations Packet {packetData = Literal a} = a
+operations Packet {typeId = tId, packetData = Packets pd}
+  | tId == 0 = sum values
+  | tId == 1 = product values
+  | tId == 2 = minimum values
+  | tId == 3 = maximum values
+  | tId == 5 = if head values > last values then 1 else 0
+  | tId == 6 = if head values < last values then 1 else 0
+  | tId == 7 = if head values == last values then 1 else 0
+  | otherwise = error "Unsupported typeId for literal operation!"
+  where
+    values = fmap operations pd
+operations _ = error "Invalid operation!"
 
 convert :: [Char] -> [Char]
 convert = concatMap hexToBin

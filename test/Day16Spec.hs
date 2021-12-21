@@ -1,6 +1,6 @@
 module Day16Spec where
 
-import Day16 (Packet (..), PacketData (..), binToDec, convert, parseLiteral, parseOperator, solve, versions)
+import Day16 (Packet (..), PacketData (..), binToDec, convert, parseLiteral, parseOperator, solve, solvePartTwo, versions)
 import Test.Hspec (Spec, it, shouldBe)
 
 spec :: Spec
@@ -38,3 +38,13 @@ spec = do
     solve "620080001611562C8802118E34" `shouldBe` 12
     solve "C0015000016115A2E0802F182340" `shouldBe` 23
     solve "A0016C880162017C3686B18A3D4780" `shouldBe` 31
+
+  it "should solve part two" $ do
+    solvePartTwo "C200B40A82" `shouldBe` 3
+    solvePartTwo "04005AC33890" `shouldBe` 54
+    solvePartTwo "880086C3E88112" `shouldBe` 7
+    solvePartTwo "CE00C43D881120" `shouldBe` 9
+    solvePartTwo "F600BC2D8F" `shouldBe` 0
+    solvePartTwo "D8005AC2A8F0" `shouldBe` 1
+    solvePartTwo "9C005AC2F8F0" `shouldBe` 0
+    solvePartTwo "9C0141080250320F1802104A08" `shouldBe` 1
