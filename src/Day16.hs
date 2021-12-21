@@ -53,9 +53,9 @@ parsePackageData _ = parseOperator
 parseLiteral :: [Char] -> (PacketData, [Char])
 parseLiteral = parsePackets' []
   where
-    parsePackets' values (a1 : a2 : a3 : a4 : a5 : xs)
-      | a1 == '1' = parsePackets' (values ++ [a2, a3, a4, a5]) xs
-      | otherwise = (Literal (binToDec (values ++ [a2, a3, a4, a5])), xs)
+    parsePackets' values (s : v0 : v1: v2 : v3 : xs)
+      | s == '1' = parsePackets' (values ++ [v0, v1, v2, v3]) xs
+      | otherwise = (Literal (binToDec (values ++ [v0, v1, v2, v3])), xs)
     parsePackets' _ _ = error "Invalid literal!"
 
 parseOperator :: [Char] -> (PacketData, [Char])
@@ -113,6 +113,7 @@ packetTypeId = binToDec . take 3 . drop 3
 headerLength :: Int
 headerLength = 6
 
+-- see https://stackoverflow.com/questions/48234356/haskell-library-function-to-convert-hexadecimal-to-binary-notation/48234462#48234462
 hexToBin :: Char -> String
 hexToBin c =
   case readHex [c] of
