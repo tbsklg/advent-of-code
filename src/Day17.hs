@@ -6,6 +6,12 @@ data Target = Target {minXPos :: Int, maxXPos :: Int, minYPos :: Int, maxYPos ::
 
 data Probe = Probe {xVel :: Int, yVel :: Int, xPos :: Int, yPos :: Int} deriving (Show, Eq, Ord)
 
+solve :: [Char] -> Int
+solve = simulate . extract
+
+solvePartTwo :: [Char] -> Int
+solvePartTwo = simulatePartTwo . extract
+
 step :: Probe -> Probe
 step Probe {xVel = xVel, yVel = yVel, xPos = xPos, yPos = yPos} =
   Probe {xVel = xVel', yVel = yVel', xPos = xPos', yPos = yPos'}
@@ -43,6 +49,31 @@ simulate Target {minXPos = minX, maxXPos = maxX, minYPos = minY, maxYPos = maxY}
           yVel <- [0 .. maxX]
       ]
 
+simulatePartTwo :: Target -> Int
+simulatePartTwo Target {minXPos = minX, maxXPos = maxX, minYPos = minY, maxYPos = maxY} = length . simulate' $ initial
+  where
+    simulate' [] = []
+    simulate' (x : xs)
+      | hitTarget = x : simulate' xs
+      | otherwise = simulate' xs
+      where
+        hitTarget =
+          (<=) 1
+            . length
+            . filter (\Probe {xPos = x, yPos = y} -> x >= minX && x <= maxX && y >= minY && y <= maxY)
+            $ steps
+
+        steps =
+          takeWhile (\Probe {xPos = x, yPos = y} -> x <= maxX && y >= minY)
+            . iterate step
+            $ x
+
+    initial =
+      [ (Probe {xPos = 0, yPos = 0, xVel = xVel, yVel = yVel})
+        | xVel <- [minY .. maxX],
+          yVel <- [minY .. maxX]
+      ]
+
 extract :: [Char] -> Target
 extract raw = Target {minXPos = head xBounds, maxXPos = last xBounds, minYPos = head yBounds, maxYPos = last yBounds}
   where
@@ -56,6 +87,3 @@ extract raw = Target {minXPos = head xBounds, maxXPos = last xBounds, minYPos = 
         . last
         . splitOn "target area: "
         $ raw
-
-solve :: [Char] -> Int
-solve = simulate . extract

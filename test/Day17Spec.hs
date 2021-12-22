@@ -2,7 +2,7 @@ module Day17Spec where
 
 import Test.Hspec (Spec, it, shouldBe)
 
-import Day17 (Target (..), simulate, extract)
+import Day17 (Target (..), simulate, extract, simulatePartTwo)
 
 spec :: Spec
 spec = do
@@ -12,3 +12,6 @@ spec = do
 
     it "should find maximum y position to for target" $ do
         simulate (Target {minXPos = 20, maxXPos = 30, minYPos = -10, maxYPos = -5}) `shouldBe` 45
+
+    it "should calculate number of distinct initial velocities" $ do
+        simulatePartTwo (Target {minXPos = 20, maxXPos = 30, minYPos = -10, maxYPos = -5}) `shouldBe` 112
