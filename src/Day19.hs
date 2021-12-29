@@ -1,32 +1,46 @@
 module Day19 where
 
--- see https://de.wikipedia.org/wiki/Eulersche_Winkel
+import Data.Set (fromList, toList)
 
-rotZ90 :: [[Int]]
-rotZ90 = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+data Point = Point {x :: Int, y :: Int, z :: Int} deriving (Show, Eq, Ord)
 
-rotX90 :: [[Int]]
-rotX90 = [[1, 0, 0], [0, 0, -1], [0, 1, 0]]
+rotZ90 :: Point -> Point
+rotZ90 Point {x = x, y = y, z = z} = Point {x = y, y = x * (-1), z = z}
 
-rotY90 :: [[Int]]
-rotY90 = [[0, 0, 1], [0, 1, 0], [-1, 0, 0]]
+rotX90 :: Point -> Point
+rotX90 Point {x = x, y = y, z = z} = Point {x = x, y = z, z = y * (-1)}
 
-rotZ :: [Int] -> [Int]
-rotZ x = multiply x rotZ90
+rotY90 :: Point -> Point
+rotY90 Point {x = x, y = y, z = z} = Point {x = z, y = y, z = x * (-1)}
 
-rotX :: [Int] -> [Int]
-rotX x = multiply x rotX90
+flipX :: Point -> Point
+flipX Point {x = x, y = y, z = z} = Point {x = x * (-1), y = y, z = z}
 
-rotY :: [Int] -> [Int]
-rotY x = multiply x rotY90
+flipY :: Point -> Point
+flipY Point {x = x, y = y, z = z} = Point {x = x, y = y * (-1), z = z}
 
-multiply :: [Int] -> [[Int]] -> [Int]
-multiply [x, y, z] rot = [x', y', z']
-  where
-    x' = rot !! 0 !! 0 * x + rot !! 0 !! 1 * y + rot !! 0 !! 2 * z
-    y' = rot !! 1 !! 0 * x + rot !! 1 !! 1 * y + rot !! 1 !! 2 * z
-    z' = rot !! 2 !! 0 * x + rot !! 2 !! 1 * y + rot !! 2 !! 2 * z
-multiply _ _ = error "Only 3d point allowed"
+flipZ :: Point -> Point
+flipZ Point {x = x, y = y, z = z} = Point {x = x, y = y, z = z * (-1)}
 
-rotateZ :: [[Int]] -> [[Int]]
-rotateZ = map rotZ
+rotations :: [Point] -> [Point]
+rotations =
+  toList
+    . fromList
+    . concatMap
+      ( \x ->
+          rotateZ (flipZ x)
+            ++ rotateY (flipY x)
+            ++ rotateX (flipX x)
+            ++ rotateX x
+            ++ rotateY x
+            ++ rotateZ x
+      )
+
+rotateX :: Point -> [Point]
+rotateX = take 4 . iterate rotX90
+
+rotateY :: Point -> [Point]
+rotateY = take 4 . iterate rotY90
+
+rotateZ :: Point -> [Point]
+rotateZ = take 4 . iterate rotZ90

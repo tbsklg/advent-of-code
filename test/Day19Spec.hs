@@ -1,23 +1,23 @@
 module Day19Spec where
 
-import Day19 (rotX, rotY, rotZ)
+import Day19 (Point (..), rotX, rotY, rotZ)
 import Test.Hspec (Spec, it, shouldBe)
 
 spec :: Spec
 spec = do
   it "should rotate z axis by 90 degrees" $ do
-    rotZ [1, 0, 0] `shouldBe` [0, 1, 0]
-    rotZ [-1, -1, 1] `shouldBe` [1, -1, 1]
-    rotZ [8, 0, 7] `shouldBe` [0, 8, 7]
+    rotZ (Point {x = 1, y = 0, z = 0}) `shouldBe` (Point {x = 1, y = 0, z = 0})
+    rotZ (Point {x = -1, y = -1, z = 1}) `shouldBe` (Point {x = 1, y = 0, z = 0})
+    rotZ (Point {x = 8, y = 0, z = 7}) `shouldBe` (Point {x = 1, y = 0, z = 0})
 
   it "should rotate x axis by 90 degrees" $ do
-    rotX [1, 0, 0] `shouldBe` [1, 0, 0]
-    rotX [-1, -1, 1] `shouldBe` [-1, -1, -1]
-    rotX [1, -1, 1] `shouldBe` [1, -1, -1]
-    rotX [8, 0, 7] `shouldBe` [8, -7, 0]
+    rotX (Point {x = 1, y = 0, z = 0}) `shouldBe` (Point {x = 1, y = 0, z = 0})
+    rotX (Point {x = -1, y = -1, z = 1}) `shouldBe` (Point {x = 1, y = 0, z = 0})
+    rotX (Point {x = 8, y = 0, z = 7}) `shouldBe` (Point {x = 1, y = 0, z = 0})
+    rotX (Point {x = 4, y = 1, z = 0}) `shouldBe` (Point {x = 1, y = 0, z = 0})
 
   it "should rotate y axis by 90 degrees" $ do
-    rotY [1, 0, 0] `shouldBe` [0, 0, -1]
-    rotY [-1, -1, 1] `shouldBe` [1, -1, 1]
-    rotY [1, -1, 1] `shouldBe` [1, -1, -1]
-    rotY [8, -7, 0] `shouldBe` [0, -7, -8]
+    rotY (Point {x = 1, y = 0, z = 0}) `shouldBe` (Point {x = 1, y = 0, z = 0})
+    rotY (Point {x = -1, y = -1, z = 1}) `shouldBe` (Point {x = 1, y = 0, z = 0})
+    rotY (Point {x = 8, y = 0, z = 7}) `shouldBe` (Point {x = 1, y = 0, z = 0})
+    rotY (Point {x = 4, y = 1, z = 0}) `shouldBe` (Point {x = 1, y = 0, z = 0})
