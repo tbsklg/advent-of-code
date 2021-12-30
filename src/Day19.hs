@@ -1,28 +1,58 @@
 module Day19 where
 
+import Data.Char (isDigit)
+import Data.List (isInfixOf, isPrefixOf)
+import Data.List.Split
 import Data.Set (fromList, toList)
+import Debug.Trace
 
-data Point = Point {x :: Int, y :: Int, z :: Int} deriving (Show, Eq, Ord)
+data Vector a = Vector a a a deriving (Show, Eq, Ord)
 
-rotZ90 :: Point -> Point
-rotZ90 Point {x = x, y = y, z = z} = Point {x = y, y = x * (-1), z = z}
+data Scanner a = Scanner Int (Vector a) [Vector a] deriving (Show, Eq, Ord)
 
-rotX90 :: Point -> Point
-rotX90 Point {x = x, y = y, z = z} = Point {x = x, y = z, z = y * (-1)}
+-- if offset between 12 Vectors for scanners with orientations/flips is equal, then we have the overlapping scanner
 
-rotY90 :: Point -> Point
-rotY90 Point {x = x, y = y, z = z} = Point {x = z, y = y, z = x * (-1)}
+extract :: [[Char]] -> [Scanner Int]
+extract [] = []
+extract (x : xs)
+  | "---" `isPrefixOf` x =
+    Scanner id position beacons : extract next
+  | otherwise = extract xs
+  where
+    id = read (takeWhile isDigit . dropWhile (not . isDigit) $ x) :: Int
+    position = Vector 0 0 0
+    beacons = map coordinates . takeWhile (/= "") $ xs
 
-flipX :: Point -> Point
-flipX Point {x = x, y = y, z = z} = Point {x = x * (-1), y = y, z = z}
+    next = dropWhile (/= "") xs
 
-flipY :: Point -> Point
-flipY Point {x = x, y = y, z = z} = Point {x = x, y = y * (-1), z = z}
+coordinates :: [Char] -> Vector Int
+coordinates raw = traceShow raw Vector x y z
+  where
+    x = head values
+    y = head . tail $ values
+    z = last values
+    values = map (\x -> read x :: Int) splitByComma
+    splitByComma = splitOn "," raw
 
-flipZ :: Point -> Point
-flipZ Point {x = x, y = y, z = z} = Point {x = x, y = y, z = z * (-1)}
+rotZ90 :: (Num a) => Vector a -> Vector a
+rotZ90 (Vector x y z) = Vector y (x * (-1)) z
 
-rotations :: [Point] -> [Point]
+rotX90 :: (Num a) => Vector a -> Vector a
+rotX90 (Vector x y z) = Vector x z (y * (-1))
+
+rotY90 :: (Num a) => Vector a -> Vector a
+rotY90 (Vector x y z) = Vector z y (x * (-1))
+
+flipX :: (Num a) => Vector a -> Vector a
+flipX (Vector x y z) = Vector (x * (-1)) y z
+
+flipY :: (Num a) => Vector a -> Vector a
+flipY (Vector x y z) = Vector x (y * (-1)) z
+
+flipZ :: (Num a) => Vector a -> Vector a
+flipZ (Vector x y z) = Vector x y (z * (-1))
+
+rotations :: (Num a, Ord a) => [Vector a] -> [Vector a]
 rotations =
   toList
     . fromList
@@ -36,11 +66,11 @@ rotations =
             ++ rotateZ x
       )
 
-rotateX :: Point -> [Point]
+rotateX :: (Num a) => Vector a -> [Vector a]
 rotateX = take 4 . iterate rotX90
 
-rotateY :: Point -> [Point]
+rotateY :: (Num a) => Vector a -> [Vector a]
 rotateY = take 4 . iterate rotY90
 
-rotateZ :: Point -> [Point]
+rotateZ :: (Num a) => Vector a -> [Vector a]
 rotateZ = take 4 . iterate rotZ90
