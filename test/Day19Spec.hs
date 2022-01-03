@@ -1,26 +1,22 @@
 module Day19Spec where
 
-import Day19 (Vector (..), rotX90, rotY90, rotZ90, rotations)
+import Day19 (Offset (..), Scanner (..), Vector (..), extract, merge, offset, rotate, rotateScanner)
 import Test.Hspec (Spec, it, shouldBe)
 
 spec :: Spec
 spec = do
-  it "should rotate z axis by 90 degrees" $ do
-    rotZ90 (Vector 1 0 0) `shouldBe` Vector 0 (-1) 0
-    rotZ90 (Vector (-1) (-1) 1) `shouldBe` Vector (-1) 1 1
-    rotZ90 (Vector 8 0 7) `shouldBe` Vector 0 (-8) 7
+  it "should rotate for given rotation matrix" $ do
+    rotate [[1, 0, 0], [0, 1, 0], [0, 0, 1]] (Vector 2 3 4) `shouldBe` (Vector 2 3 4)
+    rotate [[0, -1, 0], [1, 0, 0], [0, 0, 1]] (Vector 2 3 4) `shouldBe` (Vector (-3) 2 4)
+    rotate [[-1, 0, 0], [0, -1, 0], [0, 0, 1]] (Vector 2 3 4) `shouldBe` (Vector (-2) (-3) 4)
+    rotate [[0, 0, 1], [-1, 0, 0], [0, -1, 0]] (Vector 2 3 4) `shouldBe` (Vector 4 (-2) (-3))
+    rotate [[0, 0, 1], [0, -1, 0], [1, 0, 0]] (Vector 2 3 4) `shouldBe` (Vector 4 (-3) 2)
 
-  it "should rotate x axis by 90 degrees" $ do
-    rotX90 (Vector 1 0 0) `shouldBe` Vector 1 0 0
-    rotX90 (Vector (-1) (-1) 1) `shouldBe` Vector (-1) 1 1
-    rotX90 (Vector 8 0 7) `shouldBe` Vector 8 7 0
-    rotX90 (Vector 4 1 0) `shouldBe` Vector 4 0 (-1)
+  it "should merge Scanners" $ do
+    merge (Scanner 0 (Vector 0 0 0) [Vector 1 2 3, Vector 4 5 6]) (Scanner 0 (Vector 0 0 0) [Vector 7 8 9, Vector 10 11 12]) `shouldBe` (Scanner 0 (Vector 0 0 0) [Vector 1 2 3, Vector 4 5 6, Vector 7 8 9, Vector 10 11 12])
 
-  it "should rotate y axis by 90 degrees" $ do
-    rotY90 (Vector 1 0 0) `shouldBe` Vector 0 0 (-1)
-    rotY90 (Vector (-1) (-1) 1) `shouldBe` Vector 1 (-1) 1
-    rotY90 (Vector 8 0 7) `shouldBe` Vector 7 0 (-8)
-    rotY90 (Vector 4 1 0) `shouldBe` Vector 0 1 (-4)
+  it "should rotate a Scanner" $ do
+    rotateScanner (rotate ([[-1, 0, 0], [0, -1, 0], [0, 0, 1]])) (Scanner 0 (Vector 0 0 0) [Vector 1 2 3, Vector 4 5 6]) `shouldBe` (Scanner 0 (Vector (-1) (-1) 1) [Vector (-1) (-2) 3, Vector (-4) (-5) 6])
 
-  it "should find all rotations for a given vector" $ do
-    rotations [Vector 8 0 7] `shouldBe` [Vector (-8) (-7) 0, Vector (-8) 0 (-7), Vector (-8) 0 7, Vector (-8) 7 0, Vector (-7) 0 8, Vector 0 (-8) (-7), Vector 0 (-8) 7, Vector 0 8 (-7), Vector 0 8 7, Vector 7 0 (-8), Vector 8 (-7) 0, Vector 8 0 (-7), Vector 8 0 7, Vector 8 7 0]
+  it "should calculate offset for two vectors" $ do
+    offset (Vector 2 3 4) (Vector 5 6 7) `shouldBe` (Offset (-3) (-3) (-3))
