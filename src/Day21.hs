@@ -5,7 +5,7 @@ import qualified Data.Map as M
 data Player = Player {pos :: Int, space :: Int, score :: Int} deriving (Show, Eq, Ord)
 
 solve :: [[Char]] -> Int
-solve = result . extract
+solve = resultOfSubgame . extract
 
 solvePartTwo :: [[Char]] -> Int
 solvePartTwo = fst . wins . extract
@@ -16,8 +16,8 @@ extract raw = [player1, player2]
     player1 = Player {pos = 1, space = read [last . head $ raw] :: Int, score = 0}
     player2 = Player {pos = 2, space = read [last . last $ raw] :: Int, score = 0}
 
-result :: [Player] -> Int
-result players = losingPoints * rolls
+resultOfSubgame :: [Player] -> Int
+resultOfSubgame players = losingPoints * rolls
   where
     match = takeWhile score1000 . move $ players
     losingPoints = score . last $ match
@@ -43,9 +43,9 @@ winsUntil players score = snd . winsInUniverses spaceP1 spaceP2 0 0 $ M.empty
       | scoreP2 >= score = (state, (0, 1))
       | otherwise = case M.lookup (spaceP1, spaceP2, scoreP1, scoreP2) state of
         Just a -> (state, a)
-        Nothing -> (nextState, snd result)
+        Nothing -> (nextState, snd resultOfSubgame)
           where
-            result =
+            resultOfSubgame =
               foldl
                 ( \(s, (spaceP1, spaceP2)) (rolls, times) ->
                     (fst (winsUntil rolls s), (spaceP1 + r1 rolls times s, spaceP2 + r2 rolls times s))
@@ -56,8 +56,8 @@ winsUntil players score = snd . winsInUniverses spaceP1 spaceP2 0 0 $ M.empty
             r1 rolls times s = snd (snd (winsUntil rolls s)) * times
             r2 rolls times s = fst (snd (winsUntil rolls s)) * times
             winsUntil rolls s = winsInUniverses spaceP2 (nextSpace spaceP1 rolls) scoreP2 (scoreP1 + nextSpace spaceP1 rolls) s
-
-            nextState = M.insert (spaceP1, spaceP2, scoreP1, scoreP2) (snd result) (fst result)
+            
+            nextState = M.insert (spaceP1, spaceP2, scoreP1, scoreP2) (snd resultOfSubgame) (fst resultOfSubgame)
 
 move :: [Player] -> [Player]
 move players = move' players $ cycle [1 .. 100]
