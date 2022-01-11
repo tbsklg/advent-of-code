@@ -1,13 +1,14 @@
 module Day21 where
 
 import qualified Data.Map as M
-import Data.Maybe (fromMaybe)
-import Debug.Trace (trace, traceShow)
 
 data Player = Player {pos :: Int, space :: Int, score :: Int} deriving (Show, Eq, Ord)
 
 solve :: [[Char]] -> Int
 solve = result . extract
+
+solvePartTwo :: [[Char]] -> Int
+solvePartTwo = fst . wins . extract
 
 extract :: [[Char]] -> [Player]
 extract raw = [player1, player2]
@@ -25,23 +26,38 @@ result players = losingPoints * rolls
 score1000 :: Player -> Bool
 score1000 Player {score = score} = score /= 1000
 
-frequencies :: M.Map Int Int
-frequencies = M.fromList [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)]
+frequencies :: [(Int, Int)]
+frequencies = [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)]
 
-frequencies' :: [Int]
-frequencies' = [x + y + z | x <- [1 .. 3], y <- [1 .. 3], z <- [1 .. 3]]
+wins :: [Player] -> (Int, Int)
+wins players = winsUntil players 21
 
-computeWins p1 p2 s1 s2 state
-  | s1 >= 10 = (state, (1, 0))
-  | s2 >= 10 = (state, (0, 1))
-  | otherwise = case M.lookup (p1, p2, s1, s2) state of
-    Just a -> traceShow state (state, a)
-    Nothing -> (nextState, result)
-      where
-        result = foldl (\(p1, p2) rolls -> (p1 + (snd . snd . wins $ rolls), p2 + (fst . snd . wins $ rolls))) (0, 0) frequencies'
-        wins rolls = computeWins p2 (nextSpace p1 rolls) s2 (s1 + nextSpace p1 rolls) state
+winsUntil :: [Player] -> Int -> (Int, Int)
+winsUntil players score = snd . winsInUniverses spaceP1 spaceP2 0 0 $ M.empty
+  where
+    spaceP1 = space . head $ players
+    spaceP2 = space . last $ players
 
-        nextState = M.insert (p1, p2, s1, s2) result state
+    winsInUniverses spaceP1 spaceP2 scoreP1 scoreP2 state
+      | scoreP1 >= score = (state, (1, 0))
+      | scoreP2 >= score = (state, (0, 1))
+      | otherwise = case M.lookup (spaceP1, spaceP2, scoreP1, scoreP2) state of
+        Just a -> (state, a)
+        Nothing -> (nextState, snd result)
+          where
+            result =
+              foldl
+                ( \(s, (spaceP1, spaceP2)) (rolls, times) ->
+                    (fst (winsUntil rolls s), (spaceP1 + r1 rolls times s, spaceP2 + r2 rolls times s))
+                )
+                (state, (0, 0))
+                frequencies
+
+            r1 rolls times s = snd (snd (winsUntil rolls s)) * times
+            r2 rolls times s = fst (snd (winsUntil rolls s)) * times
+            winsUntil rolls s = winsInUniverses spaceP2 (nextSpace spaceP1 rolls) scoreP2 (scoreP1 + nextSpace spaceP1 rolls) s
+
+            nextState = M.insert (spaceP1, spaceP2, scoreP1, scoreP2) (snd result) (fst result)
 
 move :: [Player] -> [Player]
 move players = move' players $ cycle [1 .. 100]
