@@ -23,7 +23,6 @@ data Room = Room {for :: Species, amphipods :: [Amphipod]} deriving (Show, Eq, O
 
 data Amphipod = Amphipod {species :: Species, position :: Position} deriving (Show, Eq, Ord)
 
-
 target :: Burrow
 target =
   [ "#############",
@@ -55,17 +54,57 @@ speciesTo D = 'D'
 amphipodFrom :: Species -> Position -> Amphipod
 amphipodFrom s p = Amphipod {species = s, position = p}
 
-roomFor :: Species -> Burrow -> Room
-roomFor A b = Room {for = A, amphipods = amphipodFrom (speciesFrom (b !! 2 !! 3)) (2, 3) : [amphipodFrom (speciesFrom (b !! 3 !! 3)) (3, 3)]}
-roomFor B b = Room {for = B, amphipods = amphipodFrom (speciesFrom (b !! 2 !! 5)) (2, 5) : [amphipodFrom (speciesFrom (b !! 3 !! 5)) (3, 5)]}
-roomFor C b = Room {for = C, amphipods = amphipodFrom (speciesFrom (b !! 2 !! 7)) (2, 7) : [amphipodFrom (speciesFrom (b !! 3 !! 7)) (3, 7)]}
-roomFor D b = Room {for = D, amphipods = amphipodFrom (speciesFrom (b !! 2 !! 9)) (2, 9) : [amphipodFrom (speciesFrom (b !! 3 !! 9)) (3, 9)]}
+roomPositions :: Species -> [Position]
+roomPositions A = [(2, 3), (3, 3)]
+roomPositions B = [(2, 5), (3, 5)]
+roomPositions C = [(2, 7), (3, 7)]
+roomPositions D = [(2, 9), (3, 9)]
+
+canReachPosition :: Burrow -> Position -> Position -> Bool
+canReachPosition burrow from to = canMoveHorizontally && canMoveVertically
+  where
+    canMoveHorizontally = (==) 0 . length . mapMaybe (getAmphipod burrow) $ horizontally
+    canMoveVertically = (==) 0 . length . mapMaybe (getAmphipod burrow) $ vertically
+
+    moveLeft = snd to < snd from
+
+    horizontally
+      | moveLeft = [(x, y) | x <- [fst from], y <- [(snd to) .. snd from - 1]]
+      | otherwise = [(x, y) | x <- [fst from], y <- [(snd from + 1) .. (snd to)]]
+
+    vertically = [(x, y) | x <- [fst from + 1 .. fst to], y <- [snd to]]
+
+availableRoomPosition :: Burrow -> Species -> Maybe Position
+availableRoomPosition burrow for
+  | null amphipodsInRoom = Just . last $ positionsInRoom
+  | onlyOneAmphipod && sameSpecies = Just . head $ positionsInRoom
+  | otherwise = Nothing
+  where
+    sameSpecies = (==) for . species . head $ amphipodsInRoom
+    onlyOneAmphipod = length amphipodsInRoom == 1
+    positionsInRoom = roomPositions for
+    amphipodsInRoom = mapMaybe (getAmphipod burrow) positionsInRoom
 
 emptySpace :: Char
 emptySpace = '.'
 
 bla :: Burrow -> [(Burrow, Int)]
-bla burrow = []
+bla burrow = simulate initialState initials hallwayPositions
+  where
+    simulate state [] (_ : _) = []
+    simulate state (_ : xs) [] = simulate state xs hallwayPositions
+    simulate state (amphipod : as) (position : ps) = nextState state amphipod position : simulate state (amphipod : as) ps
+    simulate _ _ _ = error "Error occured while simulation!"
+
+    initials = getFirstsInRoom burrow
+    initialState = (burrow, 0)
+
+-- possiblePositions :: Burrow -> Amphipod -> [Position]
+-- possiblePositions burrow amphipd =
+
+--   where
+--     freeHallwayPositions = filter (\ position -> position /= (position amphipod)) hallwayPositions
+--     homeRoomPositions = roomPositions
 
 nextState :: State -> Amphipod -> Position -> State
 nextState (burrow, energy) amphipod to = (nextBurrow, nextEnergy)
@@ -134,6 +173,9 @@ getLastsInRoom burrow = catMaybes [firstRoom, secondRoom, thirdRoom, fourthRoom]
 
 hallway :: Burrow -> [Amphipod]
 hallway burrow = mapMaybe (getAmphipod burrow) . zip [1, 1 ..] $ [1 .. 11]
+
+hallwayPositions :: [Position]
+hallwayPositions = [(1, 1), (1, 2), (1, 4), (1, 6), (1, 8), (1, 10), (1, 11)]
 
 getAllAmphipods :: Burrow -> [Amphipod]
 getAllAmphipods burrow =

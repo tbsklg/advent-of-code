@@ -1,16 +1,10 @@
 module Day23Spec where
 
-import Day23 (Amphipod (..), Burrow (..), Energy (..), Position (..), Room (..), Species (..), bla, nextState, consumed, getAllAmphipods, getFirstsInRoom, getLastsInRoom, hallway, move, roomFor)
+import Day23 (Amphipod (..), Burrow (..), Energy (..), Position (..), Room (..), Species (..), availableRoomPosition, bla, canReachPosition, consumed, getAllAmphipods, getFirstsInRoom, getLastsInRoom, hallway, move, nextState)
 import Test.Hspec (Spec, it, shouldBe, shouldContain, shouldMatchList)
 
 spec :: Spec
 spec = do
-  it "should return current occupancy of space for species" $ do
-    roomFor A targetBurrow `shouldBe` Room {for = A, amphipods = [Amphipod {species = A, position = (2, 3)}, Amphipod {species = A, position = (3, 3)}]}
-    roomFor B targetBurrow `shouldBe` Room {for = B, amphipods = [Amphipod {species = B, position = (2, 5)}, Amphipod {species = B, position = (3, 5)}]}
-    roomFor C targetBurrow `shouldBe` Room {for = C, amphipods = [Amphipod {species = C, position = (2, 7)}, Amphipod {species = C, position = (3, 7)}]}
-    roomFor D targetBurrow `shouldBe` Room {for = D, amphipods = [Amphipod {species = D, position = (2, 9)}, Amphipod {species = D, position = (3, 9)}]}
-
   it "should find first amphipods in room" $ do
     getFirstsInRoom targetBurrow
       `shouldBe` [ Amphipod {species = A, position = (2, 3)},
@@ -78,63 +72,63 @@ spec = do
         "  #A#D#C#A#  ",
         "  #########  "
       ]
-      `shouldMatchList` [ ( [ "#############",
-                              "#.B.........#",
-                              "###.#C#B#D###",
-                              "  #A#D#C#A#  ",
-                              "  #########  "
-                            ],
-                            20
-                          ),
-                          ( [ "#############",
-                              "#B..........#",
-                              "###.#C#B#D###",
-                              "  #A#D#C#A#  ",
-                              "  #########  "
-                            ],
-                            30
-                          ),
-                          ( [ "#############",
-                              "#...B.......#",
-                              "###.#C#B#D###",
-                              "  #A#D#C#A#  ",
-                              "  #########  "
-                            ],
-                            20
-                          ),
-                          ( [ "#############",
-                              "#.....B.....#",
-                              "###.#C#B#D###",
-                              "  #A#D#C#A#  ",
-                              "  #########  "
-                            ],
-                            40
-                          ),
-                          ( [ "#############",
-                              "#.......B...#",
-                              "###.#C#B#D###",
-                              "  #A#D#C#A#  ",
-                              "  #########  "
-                            ],
-                            60
-                          ),
-                          ( [ "#############",
-                              "#.........B.#",
-                              "###.#C#B#D###",
-                              "  #A#D#C#A#  ",
-                              "  #########  "
-                            ],
-                            80
-                          ),
-                          ( [ "#############",
-                              "#..........B#",
-                              "###.#C#B#D###",
-                              "  #A#D#C#A#  ",
-                              "  #########  "
-                            ],
-                            90
-                          )
-                        ]
+      `shouldContain` [ ( [ "#############",
+                            "#B..........#",
+                            "###.#C#B#D###",
+                            "  #A#D#C#A#  ",
+                            "  #########  "
+                          ],
+                          30
+                        ),
+                        ( [ "#############",
+                            "#.B.........#",
+                            "###.#C#B#D###",
+                            "  #A#D#C#A#  ",
+                            "  #########  "
+                          ],
+                          20
+                        ),
+                        ( [ "#############",
+                            "#...B.......#",
+                            "###.#C#B#D###",
+                            "  #A#D#C#A#  ",
+                            "  #########  "
+                          ],
+                          20
+                        ),
+                        ( [ "#############",
+                            "#.....B.....#",
+                            "###.#C#B#D###",
+                            "  #A#D#C#A#  ",
+                            "  #########  "
+                          ],
+                          40
+                        ),
+                        ( [ "#############",
+                            "#.......B...#",
+                            "###.#C#B#D###",
+                            "  #A#D#C#A#  ",
+                            "  #########  "
+                          ],
+                          60
+                        ),
+                        ( [ "#############",
+                            "#.........B.#",
+                            "###.#C#B#D###",
+                            "  #A#D#C#A#  ",
+                            "  #########  "
+                          ],
+                          80
+                        ),
+                        ( [ "#############",
+                            "#..........B#",
+                            "###.#C#B#D###",
+                            "  #A#D#C#A#  ",
+                            "  #########  "
+                          ],
+                          90
+                        )
+                      ]
 
   it "should move an amphipod" $ do
     move
@@ -206,7 +200,6 @@ spec = do
                    ],
                    30
                  )
-    
     nextState
       ( [ "#############",
           "#...........#",
@@ -226,6 +219,92 @@ spec = do
                    ],
                    220
                  )
+
+  it "should return available room positions for amphipod" $ do
+    availableRoomPosition
+      [ "#############",
+        "#...........#",
+        "###B#A#C#D###",
+        "  #B#A#C#D#  ",
+        "  #########  "
+      ]
+      A
+      `shouldBe` Nothing
+
+    availableRoomPosition
+      [ "#############",
+        "#B..........#",
+        "###.#A#C#D###",
+        "  #B#A#C#D#  ",
+        "  #########  "
+      ]
+      A
+      `shouldBe` Nothing
+
+    availableRoomPosition
+      [ "#############",
+        "#B.........B#",
+        "###.#A#C#D###",
+        "  #.#A#C#D#  ",
+        "  #########  "
+      ]
+      A
+      `shouldBe` Just (3, 3)
+
+    availableRoomPosition
+      [ "#############",
+        "#B..........#",
+        "###.#A#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      A
+      `shouldBe` Just (2, 3)
+
+  it "should check if amphipod can reach a position" $ do
+    canReachPosition
+      [ "#############",
+        "#B..A.......#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      (1, 1)
+      (2, 5)
+      `shouldBe` False
+
+    canReachPosition
+      [ "#############",
+        "#B....A.....#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      (1, 1)
+      (2, 5)
+      `shouldBe` True
+
+    canReachPosition
+      [ "#############",
+        "#...B......A#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      (1, 11)
+      (2, 3)
+      `shouldBe` False
+
+    canReachPosition
+      [ "#############",
+        "#.....A....B#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      (1, 6)
+      (2, 3)
+      `shouldBe` True
 
 targetBurrow =
   [ "#############",
