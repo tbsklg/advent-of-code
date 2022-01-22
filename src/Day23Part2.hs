@@ -1,12 +1,12 @@
-module Day23 where
+module Day23Part2 where
 
 import Control.Arrow (Arrow (second))
-import Data.Function ( on )
+import Data.Function (on)
 import Data.List (minimumBy, sortBy, sortOn)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, mapMaybe)
 import Data.Semigroup (All (getAll))
-import Debug.Trace (traceShow)
+import qualified Data.Set as S
 
 type Burrow = [String]
 
@@ -27,11 +27,13 @@ data Amphipod = Amphipod {species :: Species, position :: Position} deriving (Sh
 solve :: [[Char]] -> Int
 solve = findMinimum
 
-target :: Burrow
-target =
+targetPartTwo :: Burrow
+targetPartTwo =
   [ "#############",
     "#...........#",
     "###A#B#C#D###",
+    "  #A#B#C#D#  ",
+    "  #A#B#C#D#  ",
     "  #A#B#C#D#  ",
     "  #########  "
   ]
@@ -62,10 +64,10 @@ amphipodFrom :: Species -> Position -> Amphipod
 amphipodFrom s p = Amphipod {species = s, position = p}
 
 roomPositions :: Species -> [Position]
-roomPositions A = [(2, 3), (3, 3)]
-roomPositions B = [(2, 5), (3, 5)]
-roomPositions C = [(2, 7), (3, 7)]
-roomPositions D = [(2, 9), (3, 9)]
+roomPositions A = [(2, 3), (3, 3), (4, 3), (5, 3)]
+roomPositions B = [(2, 5), (3, 5), (4, 5), (5, 5)]
+roomPositions C = [(2, 7), (3, 7), (4, 7), (5, 7)]
+roomPositions D = [(2, 9), (3, 9), (4, 9), (5, 9)]
 
 hallway :: Burrow -> [Amphipod]
 hallway burrow = mapMaybe (getAmphipod burrow) . zip [1, 1 ..] $ [1 .. 11]
@@ -76,7 +78,7 @@ hallwayPositions = [(1, 1), (1, 2), (1, 4), (1, 6), (1, 8), (1, 10), (1, 11)]
 findMinimum :: [String] -> Int
 findMinimum burrow = findMinimum' initialState
   where
-    findMinimum' state = case M.lookup target state of
+    findMinimum' state = case M.lookup targetPartTwo state of
       Just a -> a
       Nothing -> findMinimum' nextState'
       where
@@ -154,15 +156,23 @@ possiblePositions burrow amphipod
 
 isInTarget :: Burrow -> Amphipod -> Bool
 isInTarget burrow amphipod
-  | isCorrectRoom && isOnFirstPosition = isSameSpeciesOnLastPosition
-  | otherwise = isCorrectRoom && isOnLastPosition
+  | isCorrectRoom && isOnLastPosition = True
+  | otherwise = isCorrectRoom && isSameSpeciesOnDeeperPosition
   where
     isCorrectRoom = position amphipod `elem` roomPositions (species amphipod)
-    isOnFirstPosition = position amphipod == (head . roomPositions . species $ amphipod)
     isOnLastPosition = position amphipod == (last . roomPositions . species $ amphipod)
-    isSameSpeciesOnLastPosition = case getAmphipod burrow . last . roomPositions . species $ amphipod of
-      Just a -> species a == species amphipod
-      Nothing -> False
+
+    isSameSpeciesOnDeeperPosition =
+      foldl
+        ( \x y ->
+            x && case getAmphipod burrow y of
+              Just a -> (species a == species amphipod) && (fst . position $ a) > (fst . position $ amphipod)
+              Nothing -> False
+        )
+        True
+        . roomPositions
+        . species
+        $ amphipod
 
 canReachPositionFromHallway :: Burrow -> Amphipod -> Position -> Bool
 canReachPositionFromHallway burrow amphipod to = canMoveHorizontally && canMoveVertically
@@ -207,11 +217,12 @@ availableHallwayPositions burrow = findPositions hallwayPositions
 availableRoomPosition :: Burrow -> Species -> Maybe Position
 availableRoomPosition burrow for
   | null amphipodsInRoom = Just . last $ positionsInRoom
-  | onlyOneAmphipod && sameSpecies = Just . head $ positionsInRoom
+  | sameSpecies = Just nextPosition
   | otherwise = Nothing
   where
-    sameSpecies = (==) for . species . head $ amphipodsInRoom
-    onlyOneAmphipod = length amphipodsInRoom == 1
+    sameSpecies = all (\x -> species x == for) amphipodsInRoom
+    nextPosition = ((minimum . map (fst . position) $ amphipodsInRoom) - 1, snd . head $ positionsInRoom)
+
     positionsInRoom = roomPositions for
     amphipodsInRoom = mapMaybe (getAmphipod burrow) positionsInRoom
 

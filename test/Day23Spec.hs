@@ -1,51 +1,10 @@
 module Day23Spec where
 
-import Day23 (Amphipod (..), Burrow (..), Energy (..), Position (..), Room (..), Species (..), availableRoomPosition, bla, canReachPosition, consumed, getAllAmphipods, getFirstsInRoom, getLastsInRoom, hallway, move, nextState)
+import Day23 (Amphipod (..), Burrow (..), Energy (..), Position (..), Room (..), Species (..), availableHallwayPositions, availableRoomPosition, simulate, canReachPositionFromHallway, canReachPositionFromRoom, consumed, findMinimum, getAllAmphipods, hallway, isInHallway, move, nextState, possiblePositions)
 import Test.Hspec (Spec, it, shouldBe, shouldContain, shouldMatchList)
 
 spec :: Spec
 spec = do
-  it "should find first amphipods in room" $ do
-    getFirstsInRoom targetBurrow
-      `shouldBe` [ Amphipod {species = A, position = (2, 3)},
-                   Amphipod {species = B, position = (2, 5)},
-                   Amphipod {species = C, position = (2, 7)},
-                   Amphipod {species = D, position = (2, 9)}
-                 ]
-
-    getFirstsInRoom
-      [ "#############",
-        "#.........D.#",
-        "###A#.#C#.###",
-        "  #A#B#C#D#  ",
-        "  #########  "
-      ]
-      `shouldBe` [ Amphipod {species = A, position = (2, 3)},
-                   Amphipod {species = C, position = (2, 7)}
-                 ]
-
-  it "should find last amphipods in room" $ do
-    getLastsInRoom
-      [ "#############",
-        "#AA.......D.#",
-        "###.#.#C#.###",
-        "  #.#B#C#D#  ",
-        "  #########  "
-      ]
-      `shouldBe` [ Amphipod {species = B, position = (3, 5)},
-                   Amphipod {species = C, position = (3, 7)},
-                   Amphipod {species = D, position = (3, 9)}
-                 ]
-
-    getLastsInRoom
-      [ "#############",
-        "#AA.C.BCD.D.#",
-        "###.#.#.#.###",
-        "  #.#.#.#.#  ",
-        "  #########  "
-      ]
-      `shouldBe` []
-
   it "should find amphipods in hallway" $ do
     hallway
       [ "#############",
@@ -65,70 +24,18 @@ spec = do
                  ]
 
   it "should simulate all possible states after initaliziation" $ do
-    bla
-      [ "#############",
-        "#...........#",
-        "###B#C#B#D###",
-        "  #A#D#C#A#  ",
-        "  #########  "
-      ]
-      `shouldContain` [ ( [ "#############",
-                            "#B..........#",
-                            "###.#C#B#D###",
-                            "  #A#D#C#A#  ",
-                            "  #########  "
-                          ],
-                          30
-                        ),
-                        ( [ "#############",
-                            "#.B.........#",
-                            "###.#C#B#D###",
-                            "  #A#D#C#A#  ",
-                            "  #########  "
-                          ],
-                          20
-                        ),
-                        ( [ "#############",
-                            "#...B.......#",
-                            "###.#C#B#D###",
-                            "  #A#D#C#A#  ",
-                            "  #########  "
-                          ],
-                          20
-                        ),
-                        ( [ "#############",
-                            "#.....B.....#",
-                            "###.#C#B#D###",
-                            "  #A#D#C#A#  ",
-                            "  #########  "
-                          ],
-                          40
-                        ),
-                        ( [ "#############",
-                            "#.......B...#",
-                            "###.#C#B#D###",
-                            "  #A#D#C#A#  ",
-                            "  #########  "
-                          ],
-                          60
-                        ),
-                        ( [ "#############",
-                            "#.........B.#",
-                            "###.#C#B#D###",
-                            "  #A#D#C#A#  ",
-                            "  #########  "
-                          ],
-                          80
-                        ),
-                        ( [ "#############",
-                            "#..........B#",
-                            "###.#C#B#D###",
-                            "  #A#D#C#A#  ",
-                            "  #########  "
-                          ],
-                          90
-                        )
-                      ]
+    length
+      ( simulate
+          ( [ "#############",
+              "#...........#",
+              "###B#C#B#D###",
+              "  #A#D#C#A#  ",
+              "  #########  "
+            ],
+            0
+          )
+      )
+      `shouldBe` 28
 
   it "should move an amphipod" $ do
     move
@@ -262,50 +169,174 @@ spec = do
       `shouldBe` Just (2, 3)
 
   it "should check if amphipod can reach a position" $ do
-    canReachPosition
+    canReachPositionFromHallway
       [ "#############",
         "#B..A.......#",
         "###.#.#C#D###",
         "  #A#B#C#D#  ",
         "  #########  "
       ]
-      (1, 1)
+      Amphipod {species = B, position = (1, 1)}
       (2, 5)
       `shouldBe` False
 
-    canReachPosition
+    canReachPositionFromHallway
       [ "#############",
         "#B....A.....#",
         "###.#.#C#D###",
         "  #A#B#C#D#  ",
         "  #########  "
       ]
-      (1, 1)
+      Amphipod {species = B, position = (1, 1)}
       (2, 5)
       `shouldBe` True
 
-    canReachPosition
+    canReachPositionFromHallway
       [ "#############",
         "#...B......A#",
         "###.#.#C#D###",
         "  #A#B#C#D#  ",
         "  #########  "
       ]
-      (1, 11)
+      Amphipod {species = A, position = (1, 11)}
       (2, 3)
       `shouldBe` False
 
-    canReachPosition
+    canReachPositionFromHallway
       [ "#############",
         "#.....A....B#",
         "###.#.#C#D###",
         "  #A#B#C#D#  ",
         "  #########  "
       ]
-      (1, 6)
+      Amphipod {species = B, position = (1, 6)}
       (2, 3)
       `shouldBe` True
 
+    canReachPositionFromRoom
+      [ "#############",
+        "#...........#",
+        "###D#B#C#A###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = D, position = (2, 3)}
+      (1, 11)
+      `shouldBe` True
+
+    canReachPositionFromRoom
+      [ "#############",
+        "#...........#",
+        "###D#B#C#A###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = D, position = (3, 3)}
+      (1, 1)
+      `shouldBe` False
+
+  it "should find free hallway positions" $ do
+    availableHallwayPositions
+      [ "#############",
+        "#.....A....B#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      `shouldBe` [(1, 1), (1, 2), (1, 4), (1, 8), (1, 10)]
+
+    availableHallwayPositions
+      [ "#############",
+        "#.D...A....B#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      `shouldBe` [(1, 1), (1, 4), (1, 8), (1, 10)]
+
+  it "should check if amphipod is in hallway" $ do
+    isInHallway
+      [ "#############",
+        "#.D...A....B#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = A, position = (1, 6)}
+      `shouldBe` True
+
+    isInHallway
+      [ "#############",
+        "#.D...A....B#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = C, position = (3, 7)}
+      `shouldBe` False
+
+  it "should calculate possible positions" $ do
+    possiblePositions
+      [ "#############",
+        "#.D...A....B#",
+        "###.#.#C#D###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = A, position = (1, 6)}
+      `shouldBe` [(2, 3)]
+
+    possiblePositions
+      [ "#############",
+        "#.D...D....B#",
+        "###.#.#C#A###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = A, position = (2, 9)}
+      `shouldBe` [(1, 8), (1, 10)]
+
+    possiblePositions
+      [ "#############",
+        "#.D...D....B#",
+        "###.#.#C#A###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = D, position = (1, 6)}
+      `shouldBe` []
+
+    possiblePositions
+      [ "#############",
+        "#...........#",
+        "###D#B#C#A###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = D, position = (2, 3)}
+      `shouldBe` [(1, 1), (1, 2), (1, 4), (1, 6), (1, 8), (1, 10), (1, 11)]
+
+    possiblePositions
+      [ "#############",
+        "#...........#",
+        "###D#B#C#A###",
+        "  #A#B#C#D#  ",
+        "  #########  "
+      ]
+      Amphipod {species = A, position = (3, 3)}
+      `shouldBe` []
+
+  it "should find minimum" $ do
+    findMinimum
+      [ "#############",
+        "#...........#",
+        "###B#C#C#B###",
+        "  #D#D#A#A#  ",
+        "  #########  "
+      ]
+      `shouldBe` 18051
+
+targetBurrow :: [[Char]]
 targetBurrow =
   [ "#############",
     "#...........#",
