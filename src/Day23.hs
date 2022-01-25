@@ -1,12 +1,11 @@
 module Day23 where
 
 import Control.Arrow (Arrow (second))
-import Data.Function ( on )
+import Data.Function (on)
 import Data.List (minimumBy, sortBy, sortOn)
 import qualified Data.Map as M
 import Data.Maybe (catMaybes, mapMaybe)
 import Data.Semigroup (All (getAll))
-import Debug.Trace (traceShow)
 
 type Burrow = [String]
 

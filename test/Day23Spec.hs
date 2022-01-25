@@ -1,6 +1,6 @@
 module Day23Spec where
 
-import Day23 (Amphipod (..), Burrow (..), Energy (..), Position (..), Room (..), Species (..), availableHallwayPositions, availableRoomPosition, simulate, canReachPositionFromHallway, canReachPositionFromRoom, consumed, findMinimum, getAllAmphipods, hallway, isInHallway, move, nextState, possiblePositions)
+import Day23 (Amphipod (..), Burrow (..), Energy (..), Position (..), Room (..), Species (..), availableHallwayPositions, availableRoomPosition, canReachPositionFromHallway, canReachPositionFromRoom, consumed, getAllAmphipods, hallway, isInHallway, move, nextState, possiblePositions, simulate)
 import Test.Hspec (Spec, it, shouldBe, shouldContain, shouldMatchList)
 
 spec :: Spec
@@ -325,16 +325,6 @@ spec = do
       ]
       Amphipod {species = A, position = (3, 3)}
       `shouldBe` []
-
-  it "should find minimum" $ do
-    findMinimum
-      [ "#############",
-        "#...........#",
-        "###B#C#C#B###",
-        "  #D#D#A#A#  ",
-        "  #########  "
-      ]
-      `shouldBe` 18051
 
 targetBurrow :: [[Char]]
 targetBurrow =
