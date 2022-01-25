@@ -6,7 +6,6 @@ import qualified Data.Map as M
 import qualified Data.Maybe
 import qualified Data.Set as S
 import Day19 (offset)
-import Debug.Trace
 
 type Range = (Int, Int)
 
