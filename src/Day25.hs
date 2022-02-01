@@ -1,14 +1,36 @@
 module Day25 where
 
-import Day21 (nextSpace)
+import Data.List (transpose)
 
-step :: [Char] -> [Char]
-step row
-  | head row == '.' && last row == '>' = '>' : (init . tail . next $ row) ++ ['.']
-  | otherwise = next row
+solve :: Num t => [[Char]] -> t
+solve raw = simulate raw 1
   where
-    next [] = []
-    next [x] = [x]
-    next (x : y : xs)
-      | x == '>' && y == '.' = '.' : '>' : next xs
-      | otherwise = x : next (y : xs)
+    simulate raw cnt
+      | raw == performStep raw = cnt
+      | otherwise = simulate (performStep raw) (cnt + 1)
+
+performStep :: [[Char]] -> [[Char]]
+performStep rows = performSouth
+  where
+    performEast = map east rows
+    performSouth = south performEast
+
+east :: [Char] -> [Char]
+east row
+  | head row == '.' && last row == '>' = '>' : (init . tail . next row $ '>') ++ ['.']
+  | otherwise = next row '>'
+
+south :: [[Char]] -> [[Char]]
+south = transpose . south . transpose
+  where
+    south [] = []
+    south (x : xs)
+      | head x == '.' && last x == 'v' = ('v' : (init . tail . next x $ 'v') ++ ['.']) : south xs
+      | otherwise = next x 'v' : south xs
+
+next :: [Char] -> Char -> [Char]
+next [] _ = []
+next [x] c = [x]
+next (x : y : xs) c
+  | x == c && y == '.' = '.' : c : next xs c
+  | otherwise = x : next (y : xs) c
