@@ -1,11 +1,9 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-
 module Day18 where
 
 import Control.Applicative ((<|>))
-import Data.Char (isDigit)
-import Data.Maybe
-import Debug.Trace
+import Data.Char (isDigit, isNumber)
+import Data.Maybe (fromJust)
+import Debug.Trace (traceShow)
 
 data Tree a = Leaf a | Node (Tree a) (Tree a) deriving (Show, Eq, Ord)
 
@@ -29,58 +27,79 @@ maxDepth' (Leaf _) = 0
 add :: Tree Int -> Tree Int -> Tree Int
 add = Node
 
+solve :: [[Char]] -> Int
+solve = magnitude . performAdd
+
+solvePartTwo :: [[Char]] -> Int
+solvePartTwo = maximum . cumulative
+
+cumulative :: [[Char]] -> [Int]
+cumulative [] = []
+cumulative lines = cumulative' lines : cumulative (tail lines)
+  where
+    cumulative' [] = 0
+    cumulative' (x : xs) = foldl (\max next -> maximum [magnitude' x next, magnitude' next x, max]) 0 xs
+
+    magnitude' x y = magnitude t
+      where
+        (t, _) = reduce (add (slrParse x) (slrParse y), [])
+
+performAdd :: [[Char]] -> Tree Int
+performAdd lines = t
+  where
+    (t, _) = foldl (\(x, _) y -> reduce (add x (slrParse y), [])) (slrParse (head lines), []) (tail lines)
+
 reduce :: Zipper Int -> Zipper Int
 reduce t@(Node _ _, []) = case explode t of
   Just t' -> reduce t'
-  Nothing -> maybe (goTop t) reduce (split t)
+  _ -> maybe (goTop t) reduce (split t)
+reduce _ = error "Invalid state!"
+
+magnitude :: Tree Int -> Int
+magnitude (Leaf n) = n
+magnitude (Node l r) = magnitude l * 3 + magnitude r * 2
 
 explode :: Zipper Int -> Maybe (Zipper Int)
-explode t@(Node _ _, bs) = case pairAt4 of
-  Just a -> Just next
-  Nothing -> Nothing
+explode t@(Leaf _, _) = Nothing
+explode t@(Node _ _, _) = case pairAtDepth 4 t of
+  Just a -> Just . goTop $ result
+  _ -> Nothing
   where
-    pairAt4 = pairAtDepth 4 t
-    t1@(Node (Leaf ll) (Leaf rl), _) = fromJust pairAt4
+    t1@(Node (Leaf ll) (Leaf rl), _) = fromJust . pairAtDepth 4 $ t
 
-    newL = case leftMost t1 of
-      Just t2@(Leaf ll', _) -> attach (Leaf (ll' + ll)) t2
-      Just (_, _) -> t1
-      Nothing -> t1
+    newL = case nearestLeft t1 of
+      Just t'@(Leaf ll', _) -> attach (Leaf (ll' + ll)) t'
+      _ -> t1
 
-    newR = case pairAtDepth 4 (goTop newL) >>= rightMost of
-      Just t2@(Leaf rl', _) -> attach (Leaf (rl' + rl)) t2
-      Just (_, _) -> newL
-      Nothing -> newL
+    t2@(_, _) = fromJust . pairAtDepth 4 . goTop $ newL
+    newR = case nearestRight t2 of
+      Just t'@(Leaf rl', _) -> attach (Leaf (rl' + rl)) t'
+      _ -> newL
 
-    repl = case pairAtDepth 4 (goTop newR) of
-      Just t -> attach (Leaf 0) t
-      Nothing -> t
+    t3@(_, _) = fromJust . pairAtDepth 4 . goTop $ newR
+    result = attach (Leaf 0) t3
 
-    next = goTop repl
+nearestLeft :: Zipper Int -> Maybe (Zipper Int)
+nearestLeft t@(_, []) = Nothing
+nearestLeft t@(_, LeftCrumb _ : _) = nearestLeft =<< goUp t
+nearestLeft t@(_, RightCrumb _ : _) = rightNearest =<< goLeft =<< goUp t
 
-leftMost :: Zipper Int -> Maybe (Zipper Int)
-leftMost t@(_, []) = Nothing
-leftMost t@(_, LeftCrumb _ : bs) = leftMost =<< goUp t
-leftMost t@(_, RightCrumb _ : bs) = rightMostForLeft =<< goUp t
+rightNearest :: Zipper Int -> Maybe (Zipper Int)
+rightNearest t@(Leaf _, _) = Just t
+rightNearest t@(Node _ _, _) = rightNearest =<< goRight t
 
-rightMostForLeft :: Zipper Int -> Maybe (Zipper Int)
-rightMostForLeft t@(Leaf _, _) = Just t
-rightMostForLeft t@(Node (Leaf _) _, bs) = rightMostForLeft =<< goLeft t
-rightMostForLeft t@(Node _ _, bs) = rightMostForLeft =<< goLeft t
+nearestRight :: Zipper Int -> Maybe (Zipper Int)
+nearestRight t@(_, []) = Nothing
+nearestRight t@(_, RightCrumb _ : _) = nearestRight =<< goUp t
+nearestRight t@(_, LeftCrumb _ : _) = leftNearest =<< goRight =<< goUp t
 
-rightMost :: Zipper Int -> Maybe (Zipper Int)
-rightMost t@(_, []) = Nothing
-rightMost t@(_, RightCrumb _ : bs) = rightMost =<< goUp t
-rightMost t@(_, LeftCrumb _ : bs) = leftMostForRight =<< goUp t
-
-leftMostForRight :: Zipper Int -> Maybe (Zipper Int)
-leftMostForRight t@(Leaf _, _) = Just t
-leftMostForRight t@(Node (Leaf _) _, bs) = leftMostForRight =<< goLeft t
-leftMostForRight t@(Node _ _, bs) = leftMostForRight =<< goRight t
+leftNearest :: Zipper Int -> Maybe (Zipper Int)
+leftNearest t@(Leaf _, _) = Just t
+leftNearest t@(Node _ _, _) = leftNearest =<< goLeft t
 
 split :: Zipper Int -> Maybe (Zipper Int)
-split t = case splittable t of
-  Just t@(Leaf a, bs) -> Just . goTop . attach nN $ t
+split t = case splitAt' t of
+  Just t'@(Leaf a, _) -> Just . goTop . attach nN $ t'
     where
       nN = Node (Leaf lP) (Leaf rP)
       lP = a `div` 2
@@ -88,28 +107,16 @@ split t = case splittable t of
   Just t@(_, _) -> Nothing
   Nothing -> Nothing
 
-splittable :: Zipper Int -> Maybe (Zipper Int)
-splittable t@(Leaf a, _)
+splitAt' :: Zipper Int -> Maybe (Zipper Int)
+splitAt' t@(Leaf a, _)
   | a >= 10 = Just t
   | otherwise = Nothing
-splittable t@(Node _ _, _) = (splittable =<< goRight t) <|> (splittable =<< goLeft t)
+splitAt' t@(Node _ _, _) = (splitAt' =<< goLeft t) <|> (splitAt' =<< goRight t)
 
 pairAtDepth :: Int -> Zipper Int -> Maybe (Zipper Int)
 pairAtDepth n (Leaf _, _) = Nothing
-pairAtDepth 0 (t, bs) = Just (t, bs)
-pairAtDepth n (Node l (Leaf a), bs) = case goLeft (Node l (Leaf a), bs) of
-  Just next -> pairAtDepth (n - 1) next
-  Nothing -> Nothing
-pairAtDepth n (Node (Leaf a) r, bs) = case goRight (Node (Leaf a) r, bs) of
-  Just next -> pairAtDepth (n - 1) next
-  Nothing -> Nothing
-pairAtDepth n (Node l r, bs)
-  | maxDepth' l >= maxDepth' r = case goLeft (Node l r, bs) of
-    Just next -> pairAtDepth (n - 1) next
-    Nothing -> Nothing
-  | otherwise = case goRight (Node l r, bs) of
-    Just next -> pairAtDepth (n - 1) next
-    Nothing -> Nothing
+pairAtDepth 0 t@(_, _) = Just t
+pairAtDepth n t@(Node _ _, bs) = (pairAtDepth (n -1) =<< goLeft t) <|> (pairAtDepth (n -1) =<< goRight t)
 
 goLeft :: Zipper a -> Maybe (Zipper a)
 goLeft (Node l r, bs) = Just (l, LeftCrumb r : bs)
@@ -134,41 +141,164 @@ attach t (_, bs) = (t, bs)
 (-:) :: t1 -> (t1 -> t2) -> t2
 x -: f = f x
 
-parse :: [Char] -> Tree Int
-parse raw = parse' raw [] [] []
+-- AUGMENTED GRAMMAR:
+-- 0: S' -> S
+-- 1:  S -> P
+-- 2:  P -> [ E , E ]
+-- 3:  E -> N
+-- 4:  E -> P
+-- 5:  N -> r
+
+--    TERMINALS: ,, [, r, ]
+-- NONTERMINALS: N, P, S', S, E
+--      SYMBOLS: N, ,, [, r, P, S', S, E, ]
+
+-- FIRST:
+-- S' = { [ }
+--  S = { [ }
+--  P = { [ }
+--  E = { [, r }
+--  N = { r }
+
+-- FOLLOW:
+-- S' = { $ }
+--  S = { $ }
+--  P = { ,, $, ] }
+--  E = { ,, ] }
+--  N = { ,, ] }
+
+-- PARSING TABLE:
+-- +--------+--------------------------------------------+-----------------------------------+
+
+-- |        |                   ACTION                   |               GOTO                |
+-- | STATE  +--------+--------+--------+--------+--------+--------+--------+--------+--------+
+-- |        |    ,   |    [   |    r   |    ]   |    $   |    N   |    S   |    E   |    P   |
+-- +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+-- |   0    |        |   s1   |        |        |        |        |    3   |        |    2   |
+-- |   1    |        |   s1   |   s5   |        |        |    4   |        |    7   |    6   |
+-- |   2    |        |        |        |        |   r1   |        |        |        |        |
+-- |   3    |        |        |        |        |   acc  |        |        |        |        |
+-- |   4    |   r3   |        |        |   r3   |        |        |        |        |        |
+-- |   5    |   r5   |        |        |   r5   |        |        |        |        |        |
+-- |   6    |   r4   |        |        |   r4   |        |        |        |        |        |
+-- |   7    |   s8   |        |        |        |        |        |        |        |        |
+-- |   8    |        |   s1   |   s5   |        |        |    4   |        |    9   |    6   |
+-- |   9    |        |        |        |   s10  |        |        |        |        |        |
+-- |   10   |   r2   |        |        |   r2   |   r2   |        |        |        |        |
+-- +--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+
+-- +------+--------------------+------------------+---------------------+--------------------------+
+
+-- |      |       STACK        |     SYMBOLS      |        INPUT        |          ACTION          |
+-- +------+--------------------+------------------+---------------------+--------------------------+
+-- |  (1) | 0                  |                  | [ r , [ r , r ] ] $ | shift                    |
+-- |  (2) | 0 1                |  [               |   r , [ r , r ] ] $ | shift                    |
+-- |  (3) | 0 1 5              |  [ r             |     , [ r , r ] ] $ | reduce by N -> r         |
+-- |  (4) | 0 1 4              |  [ N             |     , [ r , r ] ] $ | reduce by E -> N         |
+-- |  (5) | 0 1 7              |  [ E             |     , [ r , r ] ] $ | shift                    |
+-- |  (6) | 0 1 7 8            |  [ E ,           |       [ r , r ] ] $ | shift                    |
+-- |  (7) | 0 1 7 8 1          |  [ E , [         |         r , r ] ] $ | shift                    |
+-- |  (8) | 0 1 7 8 1 5        |  [ E , [ r       |           , r ] ] $ | reduce by N -> r         |
+-- |  (9) | 0 1 7 8 1 4        |  [ E , [ N       |           , r ] ] $ | reduce by E -> N         |
+-- | (10) | 0 1 7 8 1 7        |  [ E , [ E       |           , r ] ] $ | shift                    |
+-- | (11) | 0 1 7 8 1 7 8      |  [ E , [ E ,     |             r ] ] $ | shift                    |
+-- | (12) | 0 1 7 8 1 7 8 5    |  [ E , [ E , r   |               ] ] $ | reduce by N -> r         |
+-- | (13) | 0 1 7 8 1 7 8 4    |  [ E , [ E , N   |               ] ] $ | reduce by E -> N         |
+-- | (14) | 0 1 7 8 1 7 8 9    |  [ E , [ E , E   |               ] ] $ | shift                    |
+-- | (15) | 0 1 7 8 1 7 8 9 10 |  [ E , [ E , E ] |                 ] $ | reduce by P -> [ E , E ] |
+-- | (16) | 0 1 7 8 6          |  [ E , P         |                 ] $ | reduce by E -> P         |
+-- | (17) | 0 1 7 8 9          |  [ E , E         |                 ] $ | shift                    |
+-- | (18) | 0 1 7 8 9 10       |  [ E , E ]       |                   $ | reduce by P -> [ E , E ] |
+-- | (19) | 0 2                |  P               |                   $ | reduce by S -> P         |
+-- | (20) | 0 3                |  S               |                   $ | accept                   |
+-- +------+--------------------+------------------+---------------------+--------------------------+
+slrParse :: [Char] -> Tree Int
+slrParse input = parse [0] [] input []
   where
-    parse' [] [] [] tree = case pop tree of
-      Just (_, result) -> result
-      _ -> error "Cannot parse raw data!"
-    parse' (x : xs) arr num tree
-      | x == '[' = parse' xs (push '[' arr) num tree
-      | isDigit x =
-        if head xs == ','
-          then parse' xs arr (push (read [x] :: Int, L) num) tree
-          else parse' xs arr (push (read [x] :: Int, R) num) tree
-      | x == ']' = case pop arr of
-        Just (newArr, _) -> case pop num of
-          Just (newNum, (right, d1)) ->
-            if d1 == L
-              then case pop tree of
-                Just (newTree, t1) -> parse' xs newArr newNum (push (Node (Leaf right) t1) newTree)
-                _ -> error "Invalid state!"
-              else case pop newNum of
-                Just (newNum', (left, d2)) -> parse' xs newArr newNum' (push (Node (Leaf left) (Leaf right)) tree)
-                _ -> case pop tree of
-                  Just (newTree, t1) ->
-                    if d1 == R
-                      then parse' xs newArr newNum (push (Node t1 (Leaf right)) newTree)
-                      else parse' xs newArr newNum (push (Node (Leaf right) t1) newTree)
-                  _ -> error "Invalid state!"
-          _ -> case pop tree of
-            Just (newTree, t1) -> case pop newTree of
-              Just (newTree', t2) -> parse' xs newArr num (push (Node t2 t1) newTree')
+    parse states symbols input nodes = parse' (head states) symbols nodes
+      where
+        c = head input
+
+        parse' 0 symbols nodes
+          | c == '[' = parse (push 1 states) (push '[' symbols) (tail input) nodes
+          | otherwise = error "Invalid character!"
+        parse' 1 symbols nodes
+          | isNumber c = parse (push 5 states) (push c symbols) (tail input) (push (Leaf (read [c] :: Int)) nodes)
+          | c == '[' = parse (push 1 states) (push c symbols) (tail input) nodes
+          | otherwise = error "Invalid character!"
+        parse' 2 symbols nodes
+          | null input = case pop states of
+            Just (nextStates, _) -> case pop symbols of
+              Just (nextSymbols, _) -> parse (push 3 nextStates) (push 'S' nextSymbols) input nodes
               _ -> error "Invalid state!"
             _ -> error "Invalid state!"
-        _ -> error "Invalid state!"
-      | otherwise = parse' xs arr num tree
-    parse' _ _ _ _ = error "Cannot parse raw data!"
+          | otherwise = error "Invalid state!"
+        parse' 3 symbols nodes
+          | null input = head nodes
+          | otherwise = error "Invalid state!"
+        parse' 5 symbols nodes
+          | c == ',' = case pop states of
+            Just (nextState, state) -> case pop symbols of
+              Just (nextSymbols, _) -> parse (push 4 nextState) (push 'N' nextSymbols) input nodes
+              _ -> error "Invalid state!"
+            _ -> error "Invalid state!"
+          | c == ']' = case pop states of
+            Just (nextState, state) -> case pop symbols of
+              Just (nextSymbols, _) -> parse (push 4 nextState) (push 'N' nextSymbols) input nodes
+              _ -> error "Invalid state!"
+            _ -> error "Invalid state!"
+          | otherwise = error "Not yet implemented!"
+        parse' 4 symbols nodes
+          | c == ',' = case pop states of
+            Just (nextState, state) -> case pop symbols of
+              Just (nextSymbols, _) -> parse (push 6 states) (push 'E' nextSymbols) input nodes
+              _ -> error "Invalid state!"
+            _ -> error "Invalid state!"
+          | c == ']' = case pop states of
+            Just (nextState, state) -> case pop symbols of
+              Just (nextSymbols, _) -> parse (push 9 states) (push 'E' nextSymbols) input nodes
+              _ -> error "Invalid state!"
+            _ -> error "Invalid state!"
+          | otherwise = error "Not yet implemented!"
+        parse' 6 symbols nodes
+          | c == ',' = parse (push 8 states) (push ',' symbols) (tail input) nodes
+          | c == ']' = case pop states of
+            Just (nextState, _) -> case pop symbols of
+              Just (nextSymbols, _) -> parse (push 9 states) (push 'E' nextSymbols) input nodes
+              _ -> error "Invalid state!"
+            _ -> error "Invalid state!"
+          | otherwise = error "Invalid state!"
+        parse' 7 symbols nodes
+          | c == ',' = case pop states of
+            Just (nextState, _) -> case pop symbols of
+              Just (nextSymbols, _) -> parse (push 4 nextState) (push 'E' nextSymbols) input nodes
+              _ -> error "Invalid state!"
+            _ -> error "Invalid state!"
+          | otherwise = error "Not yet implemented!"
+        parse' 8 symbols nodes
+          | isNumber c = parse (push 5 states) (push c symbols) (tail input) (push (Leaf (read [c] :: Int)) nodes)
+          | c == '[' = parse (push 1 states) (push '[' symbols) (tail input) nodes
+          | otherwise = error "Invalid character!"
+        parse' 9 symbols nodes
+          | c == ']' = parse (push 10 states) (push ']' symbols) (tail input) nodes
+          | otherwise = error "Invalid character!"
+        parse' 10 symbols nodes
+          | null input = parse (push 2 nextStates) (push 'P' nextSymbols) input (push node nextNodes)
+          | c == ']' = parse (push 6 nextStates) (push 'P' nextSymbols) input (push node nextNodes)
+          | c == ',' = parse (push 7 nextStates) (push 'P' nextSymbols) input (push node nextNodes)
+          | otherwise = error "Not yet implemented!"
+          where
+            node = nodeFrom (take 2 nodes)
+            nextNodes = drop 2 nodes
+            nextStates = drop 5 states
+            nextSymbols = drop 5 symbols
+        parse' _ _ _ = error "Invalid state!"
+
+nodeFrom :: [Tree Int] -> Tree Int
+nodeFrom raw = Node left right
+  where
+    left = last raw
+    right = head raw
 
 push :: a -> [a] -> [a]
 push c s = c : s
