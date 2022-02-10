@@ -3,7 +3,6 @@ module Day18 where
 import Control.Applicative ((<|>))
 import Data.Char (isDigit, isNumber)
 import Data.Maybe (fromJust)
-import Debug.Trace (traceShow)
 
 data Tree a = Leaf a | Node (Tree a) (Tree a) deriving (Show, Eq, Ord)
 
@@ -141,6 +140,8 @@ attach t (_, bs) = (t, bs)
 (-:) :: t1 -> (t1 -> t2) -> t2
 x -: f = f x
 
+-- https://github.com/Vipul97/slr-parser
+
 -- AUGMENTED GRAMMAR:
 -- 0: S' -> S
 -- 1:  S -> P
@@ -221,11 +222,11 @@ slrParse input = parse [0] [] input []
 
         parse' 0 symbols nodes
           | c == '[' = parse (push 1 states) (push '[' symbols) (tail input) nodes
-          | otherwise = error "Invalid character!"
+          | otherwise = error "Invalid character at state 0!"
         parse' 1 symbols nodes
           | isNumber c = parse (push 5 states) (push c symbols) (tail input) (push (Leaf (read [c] :: Int)) nodes)
           | c == '[' = parse (push 1 states) (push c symbols) (tail input) nodes
-          | otherwise = error "Invalid character!"
+          | otherwise = error "Invalid character at state 1!"
         parse' 2 symbols nodes
           | null input = case pop states of
             Just (nextStates, _) -> case pop symbols of
@@ -235,7 +236,7 @@ slrParse input = parse [0] [] input []
           | otherwise = error "Invalid state!"
         parse' 3 symbols nodes
           | null input = head nodes
-          | otherwise = error "Invalid state!"
+          | otherwise = error "Invalid character at state 3!"
         parse' 5 symbols nodes
           | c == ',' = case pop states of
             Just (nextState, state) -> case pop symbols of
@@ -247,7 +248,7 @@ slrParse input = parse [0] [] input []
               Just (nextSymbols, _) -> parse (push 4 nextState) (push 'N' nextSymbols) input nodes
               _ -> error "Invalid state!"
             _ -> error "Invalid state!"
-          | otherwise = error "Not yet implemented!"
+          | otherwise = error "Invalid character at state 5!"
         parse' 4 symbols nodes
           | c == ',' = case pop states of
             Just (nextState, state) -> case pop symbols of
@@ -259,7 +260,7 @@ slrParse input = parse [0] [] input []
               Just (nextSymbols, _) -> parse (push 9 states) (push 'E' nextSymbols) input nodes
               _ -> error "Invalid state!"
             _ -> error "Invalid state!"
-          | otherwise = error "Not yet implemented!"
+          | otherwise = error "Invalid character at state 4!"
         parse' 6 symbols nodes
           | c == ',' = parse (push 8 states) (push ',' symbols) (tail input) nodes
           | c == ']' = case pop states of
@@ -267,26 +268,26 @@ slrParse input = parse [0] [] input []
               Just (nextSymbols, _) -> parse (push 9 states) (push 'E' nextSymbols) input nodes
               _ -> error "Invalid state!"
             _ -> error "Invalid state!"
-          | otherwise = error "Invalid state!"
+          | otherwise = error "Invalid character at state 6!"
         parse' 7 symbols nodes
           | c == ',' = case pop states of
             Just (nextState, _) -> case pop symbols of
               Just (nextSymbols, _) -> parse (push 4 nextState) (push 'E' nextSymbols) input nodes
               _ -> error "Invalid state!"
             _ -> error "Invalid state!"
-          | otherwise = error "Not yet implemented!"
+          | otherwise = error "Invalid character at state 7!"
         parse' 8 symbols nodes
           | isNumber c = parse (push 5 states) (push c symbols) (tail input) (push (Leaf (read [c] :: Int)) nodes)
           | c == '[' = parse (push 1 states) (push '[' symbols) (tail input) nodes
-          | otherwise = error "Invalid character!"
+          | otherwise = error "Invalid character at state 8!"
         parse' 9 symbols nodes
           | c == ']' = parse (push 10 states) (push ']' symbols) (tail input) nodes
-          | otherwise = error "Invalid character!"
+          | otherwise = error "Invalid character at state 9!"
         parse' 10 symbols nodes
           | null input = parse (push 2 nextStates) (push 'P' nextSymbols) input (push node nextNodes)
           | c == ']' = parse (push 6 nextStates) (push 'P' nextSymbols) input (push node nextNodes)
           | c == ',' = parse (push 7 nextStates) (push 'P' nextSymbols) input (push node nextNodes)
-          | otherwise = error "Not yet implemented!"
+          | otherwise = error "Invalid character at state 10!"
           where
             node = nodeFrom (take 2 nodes)
             nextNodes = drop 2 nodes
