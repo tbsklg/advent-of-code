@@ -3,7 +3,6 @@ module Day9 where
 import Data.List (sort, transpose)
 import Data.Maybe (catMaybes, fromMaybe)
 import Data.Set (empty, insert, toList)
-import Debug.Trace (traceShow)
 
 data Point = Point Int Int deriving (Show, Eq, Ord)
 

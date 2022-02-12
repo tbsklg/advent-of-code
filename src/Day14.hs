@@ -4,7 +4,6 @@ import qualified Data.Bifunctor
 import Data.List.Split (splitOn)
 import Data.Map (empty, fromList, fromListWith, insertWith, toList, unionWith)
 import Data.Maybe (fromMaybe)
-import Debug.Trace (traceShow)
 
 solve :: Int -> [[Char]] -> Int
 solve times raw = mostCommon - leastCommon

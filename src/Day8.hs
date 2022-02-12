@@ -3,7 +3,6 @@ module Day8 where
 import Data.List (elemIndex, nub, permutations, sort)
 import Data.List.Split (splitOn)
 import Data.Maybe (fromMaybe)
-import Debug.Trace (traceShow)
 
 newtype Output = Output [String] deriving (Show, Eq)
 

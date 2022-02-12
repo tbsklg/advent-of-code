@@ -5,7 +5,6 @@ module Day4 (score, scorePartTwo) where
 import Data.List (transpose)
 import Data.List.Split (splitOn)
 import Data.Maybe (fromMaybe)
-import Debug.Trace (traceShow)
 
 score :: [[Char]] -> Int
 score raw = calculateScore . firstWinningBoard numbers $ boards

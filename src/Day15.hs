@@ -7,7 +7,6 @@ import Data.Ord (comparing)
 
 import qualified Data.Map as M
 import qualified Data.Set as S
-import Debug.Trace
 
 newtype ColumnIndex = ColumnIndex Int deriving (Show, Eq, Ord)
 
